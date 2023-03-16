@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"math/big"
 )
 
@@ -49,8 +50,13 @@ type FileMetadata struct {
 }
 
 func (f *FileMetadata) filltimeBase() {
-	for k, _ := range f.Streams {
+	for k := range f.Streams {
 		if f.Streams[k].TimeBase == nil {
+			if f.Streams[k].TimeBaseDen == 0 {
+				// This would crash, so we just ignore these.
+				logrus.Warn("parsed timebase denominator is 0.")
+				continue
+			}
 			f.Streams[k].TimeBase = big.NewRat(f.Streams[k].TimeBaseNum, f.Streams[k].TimeBaseDen)
 		}
 		if f.Streams[k].TimeBaseNum == 0 {

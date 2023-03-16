@@ -1,0 +1,10 @@
+#! /bin/bash
+
+dir="$1"
+shift
+
+if file=($(printf "%s\n" "$@" | grep '\.c$'))
+then JSON="$(jq -cnR '[inputs|{directory:$pwd, arguments:[$ARGS.positional[]], file:.}]' --arg pwd "$PWD" --args -- "$@" <<< "${file}")"
+     echo "$JSON" >> "${dir}/compile_commands.tmp.json"
+fi
+exec "$@"

@@ -39,7 +39,7 @@ static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
  *
  * realloc with 0 size will free the underlying data buffer.
  *
- * The passed buffer must not have it's lock held by another.
+ * The passed buffer must not have its lock held by another.
  * @param buffer
  * @param size
  * @return

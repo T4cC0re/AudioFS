@@ -12,13 +12,14 @@ void *jansson_custom_malloc(size_t s) {
 
 void jansson_custom_free(void *p) { AUDIOFS_FREE(p); }
 
-void audiofs_libav_setup() {
+__attribute__((unused)) void audiofs_libav_setup() {
     // make jansson use logged allocs
     json_set_alloc_funcs(jansson_custom_malloc, jansson_custom_free);
 }
 
-char *get_metadate_from_file(char *path) {
+__attribute__((unused)) char *get_metadate_from_file(char *path) {
     // region variables
+    infof("getting metadata from '%s'", path);
     AVFormatContext *  fmt_ctx = avformat_alloc_context();
     AVDictionaryEntry *tag     = NULL;
     int                ret;
@@ -90,9 +91,10 @@ char *get_metadate_from_file(char *path) {
             json_object_set_new(json_streams[i], "time_base_num", json_integer(fmt_ctx->streams[i]->time_base.num));
             json_object_set_new(json_streams[i], "time_base_den", json_integer(fmt_ctx->streams[i]->time_base.den));
 
-            char *layout = malloc(sizeof(char) * 256);
+            char *layout = AUDIOFS_CALLOC(256, sizeof(char));
             av_channel_layout_describe(&fmt_ctx->streams[i]->codecpar->ch_layout, layout, 255);
             json_object_set_new(json_streams_codec[i], "ch_layout", json_string(layout));
+            AUDIOFS_FREE(layout);
             json_object_set_new(
                 json_streams_codec[i],
                 "type",
@@ -173,6 +175,10 @@ char *get_metadate_from_file(char *path) {
     json_decref(json_file_format);
     json_decref(json_file);
     json_decref(json);
+
+    AUDIOFS_FREE(json_streams);
+    AUDIOFS_FREE(json_streams_metadata);
+    AUDIOFS_FREE(json_streams_codec);
 
     // Close the input file
     avformat_close_input(&fmt_ctx);

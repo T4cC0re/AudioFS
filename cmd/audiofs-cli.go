@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gitlab.com/t4cc0re/audiofs/config"
 	_ "gitlab.com/t4cc0re/audiofs/config"
 	"gitlab.com/t4cc0re/audiofs/lib"
@@ -113,6 +114,15 @@ a count and a string.`,
 	config.Config.SetDefault("import.file.careful_dedupe", true)
 	config.Config.SetDefault("import.catalog.careful_dedupe", true)
 	config.Config.SetDefault("check.careful_dedupe", true)
+	config.Config.SetDefault("loglevel", "info")
+	levelStr := config.Config.GetString("loglevel")
+	level, err := logrus.ParseLevel(levelStr)
+	if err != nil {
+		logrus.Warnf("Configured `loglevel` '%s' is invalid. Using 'warning'", levelStr)
+		level = logrus.WarnLevel
+	}
+	logrus.SetLevel(level)
+	native.ApplyLogrusLevel()
 
 	cmdImport.Flags().BoolVarP(&import_KeepOriginal, "keep", "k", true, "keep the original file")
 	cmdImport.Flags().BoolVarP(&importExists_CarefulDedupe, "careful", "c", true, "only dedupe a file if PCM audio is bit-for-bit identical")

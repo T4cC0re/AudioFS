@@ -1,5 +1,14 @@
+/.idea
+
+/bin/*
+*.aif
+*.aiff
+*.dsf
 *.wav
 *.flac
+/audiofs.yaml
 /fpcalc
 /target
 
+/native/compile_commands.json
+/native/.idea/
