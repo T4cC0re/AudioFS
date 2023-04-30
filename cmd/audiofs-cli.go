@@ -114,6 +114,8 @@ a count and a string.`,
 	config.Config.SetDefault("import.file.careful_dedupe", true)
 	config.Config.SetDefault("import.catalog.careful_dedupe", true)
 	config.Config.SetDefault("check.careful_dedupe", true)
+	config.Config.SetDefault("conversion.dither", "high_shibata")
+	config.Config.SetDefault("conversion.resampler", "swr")
 	config.Config.SetDefault("loglevel", "info")
 	levelStr := config.Config.GetString("loglevel")
 	level, err := logrus.ParseLevel(levelStr)

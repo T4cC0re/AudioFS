@@ -6,9 +6,11 @@
 *.dsf
 *.wav
 *.flac
+*.pcm*
 /audiofs.yaml
 /fpcalc
 /target
 
 /native/compile_commands.json
 /native/.idea/
+/test-audio/

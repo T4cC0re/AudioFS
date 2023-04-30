@@ -1,34 +1,27 @@
 package native
 
 /*
-#cgo CFLAGS: -flto -ffat-lto-objects -fPIC -DAUDIOFS_CGO=1
-#cgo pkg-config: libavformat libavutil libavcodec libchromaprint
-#cgo LDFLAGS: -ljansson
+#cgo CFLAGS: -flto -ffat-lto-objects -fPIC -DAUDIOFS_CGO=1 -Werror=unused-result -D_FORTIFY_SOURCE=2
+#cgo pkg-config: libavformat libavutil libavcodec libavfilter libchromaprint
+#cgo LDFLAGS: -ljansson -lswresample
 
-#include <stdlib.h>
-// region libav.c
-extern void audiofs_libav_setup();
-extern char *get_metadate_from_file(char *path);
-extern char *chromaprint_from_file(const char *path);
-// endregion libav.c
-
-//region logbuffer.c
-extern void audiofs_log_level_set(int level);
-// endregion logbuffer.c
-
-// helper functions
+#include "golang_glue.h"
 */
 import "C"
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"gitlab.com/t4cc0re/audiofs/config"
 	"gitlab.com/t4cc0re/audiofs/lib/types"
 	"unsafe"
 )
 
 func init() {
 	C.audiofs_libav_setup()
+	data := COnwedByteSliceFromAudioFSBuffer(unsafe.Pointer(C.test_buffer))
+	println(string(data))
 }
 
 func ApplyLogrusLevel() {
@@ -58,6 +51,18 @@ func go_print(level C.int, function *C.char, file *C.char, line C.int, string *C
 	}
 }
 
+//export get_setting_string
+func get_setting_string(setting *C.char) *C.char {
+	str := C.GoString(setting)
+	return C.CString(config.Config.GetString(str))
+}
+
+//export get_setting_int
+func get_setting_int(setting *C.char) C.int {
+	str := C.GoString(setting)
+	return C.int(config.Config.GetInt(str))
+}
+
 func GetMetadataFromFile(path string) (*types.FileMetadata, error) {
 	cstr := C.CString(path)
 	defer C.free(unsafe.Pointer(cstr))
@@ -75,4 +80,30 @@ func GetMetadataFromFile(path string) (*types.FileMetadata, error) {
 	}
 
 	return &val, nil
+}
+
+func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
+
+	//lock := uint(C.offset_audiofs_buffer_lock)
+	//data := uint(C.offset_audiofs_buffer_data)
+	//leng := uint(C.offset_audiofs_buffer_len)
+
+	//println(lock)
+	//println(data)
+	//println(leng)
+
+	fmt.Printf("%p\n", ptr)
+
+	buffer := (*C.audiofs_buffer)(ptr)
+	C.pthread_mutex_lock(&buffer.lock)
+	//len2 := C.audiofs_buffer_data_len(ptr)
+	//
+	//println(len2)
+	//data2 := unsafe.Pointer(uintptr(ptr) + uintptr(data))
+	fmt.Printf("%p\n", buffer.data)
+	C.pthread_mutex_lock(&buffer.used_outside_audiofs)
+	C.pthread_mutex_unlock(&buffer.lock)
+
+	//return unsafe.Slice((*byte)(data3), int(len2))
+	return nil
 }

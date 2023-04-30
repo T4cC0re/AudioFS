@@ -21,7 +21,9 @@
 #else
 
 // Defined in glue.go
-extern void go_print(int level, const char *function, const char *file, int line, const char *log_msg, int len);
+extern void  go_print(int level, const char *function, const char *file, int line, const char *log_msg, int len);
+extern char *get_setting_string(const char *key);
+extern int   get_setting_int(const char *key);
 
 // Defined in logbuffer.c
 extern pthread_mutex_t go_log_mutex;
@@ -37,6 +39,7 @@ extern int             go_log_level;
                 if (go_log_buffer == NULL) {                                                                        \
                     go_log_buffer = (char *)malloc(len + 1);                                                        \
                 } else {                                                                                            \
+                    void *supress_clang_tidy = go_log_buffer;                                                       \
                     if (go_log_buffer_len < (len + 1)) { go_log_buffer = (char *)realloc(go_log_buffer, len + 1); } \
                 }                                                                                                   \
                 if (go_log_buffer == NULL) {                                                                        \
@@ -51,22 +54,38 @@ extern int             go_log_level;
 
 #    define printf(...) audiofs_log(AUDIOFS_LOG_INFO, __VA_ARGS__)
 #endif
+#define panicf(...) audiofs_log(AUDIOFS_LOG_PANIC, __VA_ARGS__)
+#define fatalf(...) audiofs_log(AUDIOFS_LOG_FATAL, __VA_ARGS__)
 #define errorf(...) audiofs_log(AUDIOFS_LOG_ERROR, __VA_ARGS__)
 #define warnf(...)  audiofs_log(AUDIOFS_LOG_WARN, __VA_ARGS__)
 #define infof(...)  audiofs_log(AUDIOFS_LOG_INFO, __VA_ARGS__)
-#define debugf(...) audiofs_log(AUDIOFS_LOG_DEBUG, __VA_ARGS__)
-#define tracef(...) audiofs_log(AUDIOFS_LOG_TRACE, __VA_ARGS__)
 
 #ifdef AUDIOFS_NO_TRACE
-#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) \
+#    define AUDIOFS_BREAKPOINT \
         {}
-#    define AUDIOFS_PRINTVAL_PREFIX2(val, print_type, prefix) \
+#    define debugf(...) \
+        {}
+#    define tracef(...) \
+        {}
+#    define AUDIOFS_TRACEVAL_PREFIX(val, print_type, prefix) \
+        {}
+#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) \
         {}
 #    define AUDIOFS_PRINTVAL(val, print_type) \
         {}
 #else
-#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) tracef("%s:" #    val "=%" print_type, prefix, val)
-#    define AUDIOFS_PRINTVAL(val, print_type)                tracef(#    val "=%" print_type, val)
+#    ifdef WIN32
+#        define AUDIOFS_BREAKPOINT \
+            { __asm int 3; }
+#    else
+#        define AUDIOFS_BREAKPOINT \
+            { asm("int $3"); }
+#    endif
+#    define debugf(...)                                      audiofs_log(AUDIOFS_LOG_DEBUG, __VA_ARGS__)
+#    define tracef(...)                                      audiofs_log(AUDIOFS_LOG_TRACE, __VA_ARGS__)
+#    define AUDIOFS_TRACEVAL_PREFIX(val, print_type, prefix) tracef("%s:" #    val "=%" print_type, prefix, val)
+#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) debugf("%s:" #    val "=%" print_type, prefix, val)
+#    define AUDIOFS_PRINTVAL(val, print_type)                debugf(#    val "=%" print_type, val)
 #endif
 
 #define MIN(X, Y)                      (((X) < (Y)) ? (X) : (Y))
@@ -92,27 +111,22 @@ extern int             go_log_level;
 #else
 #    define AUDIOFS_MALLOC(size)                                                \
         ({                                                                      \
-            void *pointer;                                                      \
-            AUDIOFS_PRINTVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_MALLOC"); \
-            pointer = AUDIOFS_MALLOC_NO_TRACE(size);                            \
-            AUDIOFS_PRINTVAL_PREFIX(pointer, "p", "AUDIOFS_MALLOC");            \
+            AUDIOFS_TRACEVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_MALLOC"); \
+            void *pointer = AUDIOFS_MALLOC_NO_TRACE(size);                            \
+            AUDIOFS_TRACEVAL_PREFIX(pointer, "p", "AUDIOFS_MALLOC");            \
             pointer;                                                            \
         })
 #    define AUDIOFS_CALLOC(count, size)                                         \
         ({                                                                      \
-            void *pointer;                                                      \
-            AUDIOFS_PRINTVAL_PREFIX(count, "d", "AUDIOFS_CALLOC");              \
-            AUDIOFS_PRINTVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_CALLOC"); \
-            pointer = AUDIOFS_CALLOC_NO_TRACE(count, size);                     \
-            AUDIOFS_PRINTVAL_PREFIX(pointer, "p", "AUDIOFS_CALLOC");            \
+            AUDIOFS_TRACEVAL_PREFIX(count, "d", "AUDIOFS_CALLOC");              \
+            AUDIOFS_TRACEVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_CALLOC"); \
+            void *pointer = AUDIOFS_CALLOC_NO_TRACE(count, size);                     \
+            AUDIOFS_TRACEVAL_PREFIX(pointer, "p", "AUDIOFS_CALLOC");            \
             pointer;                                                            \
         })
 #    define AUDIOFS_FREE(ptr)                                        \
-        AUDIOFS_PRINTVAL_PREFIX((void *)(ptr), "p", "AUDIOFS_FREE"); \
+        AUDIOFS_TRACEVAL_PREFIX((void *)(ptr), "p", "AUDIOFS_FREE"); \
         AUDIOFS_FREE_NO_TRACE(ptr)
 #endif
-
-#define LOCK_ACTIVE_CONTEXT()   pthread_mutex_lock(&active_context_lock)
-#define UNLOCK_ACTIVE_CONTEXT() pthread_mutex_unlock(&active_context_lock)
 
 #endif // NATIVE_MACROS_H
