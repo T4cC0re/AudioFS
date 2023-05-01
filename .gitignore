@@ -12,5 +12,7 @@
 /target
 
 /native/compile_commands.json
+/native/compile_commands.tmp.json
 /native/.idea/
+/native/dependencies/
 /test-audio/

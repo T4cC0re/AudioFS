@@ -34,7 +34,7 @@ func errorToErrorCode(err error) C.int {
 // endregion "glue"
 
 // region "audiofs/lib exports"
-//
+
 //export audiofs_library_addToCatalog
 func audiofs_library_addToCatalog(path *C.char) C.int {
 	err := lib.AddToCatalog(C.GoString(path))

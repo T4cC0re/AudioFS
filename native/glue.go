@@ -1,9 +1,8 @@
 package native
 
 /*
-#cgo CFLAGS: -flto -ffat-lto-objects -fPIC -DAUDIOFS_CGO=1 -Werror=unused-result -D_FORTIFY_SOURCE=2
-#cgo pkg-config: libavformat libavutil libavcodec libavfilter libchromaprint
-#cgo LDFLAGS: -ljansson -lswresample
+#cgo CFLAGS: -DAUDIOFS_CGO=1 -Werror=unused-result -D_FORTIFY_SOURCE=2 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC -I${SRCDIR}/dependencies/built/include
+#cgo LDFLAGS: -fPIE -static -Wl,--start-group -lswresample-audiofs -lswscale-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz -Wl,--end-group
 
 #include "golang_glue.h"
 */
@@ -22,6 +21,7 @@ func init() {
 	C.audiofs_libav_setup()
 	data := COnwedByteSliceFromAudioFSBuffer(unsafe.Pointer(C.test_buffer))
 	println(string(data))
+	fmt.Printf("build mode: %s\n", mode)
 }
 
 func ApplyLogrusLevel() {

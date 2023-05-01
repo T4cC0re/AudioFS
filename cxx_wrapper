@@ -1,9 +1,9 @@
 #! /bin/bash
 
 dir="$(dirname "$(realpath "$0")")/native"
-set -- "gcc" "${@:1}" # Prepend GCC to invocation to be fully transparent
+set -- "g++" "${@:1}" # Prepend GCC to invocation to be fully transparent
 
-if file=($(printf "%s\n" "$@" | grep '\.c$'))
+if file=($(printf "%s\n" "$@" | grep '\.c\(\|cc\|pp\)$'))
 then JSON="$(jq -cnR '[inputs|{directory:$pwd, arguments:[$ARGS.positional[]], file:.}]' --arg pwd "$PWD" --args -- "$@" <<< "${file}")"
      echo "$JSON" >> "${dir}/compile_commands.tmp.json"
 fi
