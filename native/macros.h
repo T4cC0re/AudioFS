@@ -31,25 +31,30 @@ extern char *          go_log_buffer;
 extern int             go_log_buffer_len;
 extern int             go_log_level;
 
-#    define audiofs_log(level, ...)                                                                                 \
-        ({                                                                                                          \
-            if (level <= go_log_level) {                                                                            \
-                pthread_mutex_lock(&go_log_mutex);                                                                  \
-                int len = snprintf(NULL, 0, __VA_ARGS__);                                                           \
-                if (go_log_buffer == NULL) {                                                                        \
-                    go_log_buffer = (char *)malloc(len + 1);                                                        \
-                } else {                                                                                            \
-                    void *supress_clang_tidy = go_log_buffer;                                                       \
-                    if (go_log_buffer_len < (len + 1)) { go_log_buffer = (char *)realloc(go_log_buffer, len + 1); } \
-                }                                                                                                   \
-                if (go_log_buffer == NULL) {                                                                        \
-                    fprintf(stderr, "[AUDIOFS_C EXCEPTION] Could not allocate log buffer!\n");                      \
-                } else {                                                                                            \
-                    snprintf(go_log_buffer, len + 1, __VA_ARGS__);                                                  \
-                    go_print(level, __FUNCTION__, __FILE__, __LINE__, go_log_buffer, len);                          \
-                }                                                                                                   \
-                pthread_mutex_unlock(&go_log_mutex);                                                                \
-            }                                                                                                       \
+#    define audiofs_log(level, ...)                                                                                   \
+        ({                                                                                                            \
+            if (level <= go_log_level) {                                                                              \
+                pthread_mutex_lock(&go_log_mutex);                                                                    \
+                int len = snprintf(NULL, 0, __VA_ARGS__);                                                             \
+                if (go_log_buffer == NULL) {                                                                          \
+                    go_log_buffer = (char *)malloc(len + 1);                                                          \
+                } else {                                                                                              \
+                    if (go_log_buffer_len < (len + 1)) {                                                              \
+                        /*                                                                                            \
+                         * clang-tidy remarks that the pointer could get lost if the realloc fails, however, we check \
+                         * this afterward                                                                             \
+                         */                                                                                           \
+                        go_log_buffer = (char *)realloc(go_log_buffer, len + 1); /*NOLINT*/                           \
+                    }                                                                                                 \
+                }                                                                                                     \
+                if (go_log_buffer == NULL) {                                                                          \
+                    fprintf(stderr, "[AUDIOFS_C EXCEPTION] Could not allocate log buffer!\n");                        \
+                } else {                                                                                              \
+                    snprintf(go_log_buffer, len + 1, __VA_ARGS__);                                                    \
+                    go_print(level, __FUNCTION__, __FILE__, __LINE__, go_log_buffer, len);                            \
+                }                                                                                                     \
+                pthread_mutex_unlock(&go_log_mutex);                                                                  \
+            }                                                                                                         \
         })
 
 #    define printf(...) audiofs_log(AUDIOFS_LOG_INFO, __VA_ARGS__)
@@ -112,7 +117,7 @@ extern int             go_log_level;
 #    define AUDIOFS_MALLOC(size)                                                \
         ({                                                                      \
             AUDIOFS_TRACEVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_MALLOC"); \
-            void *pointer = AUDIOFS_MALLOC_NO_TRACE(size);                            \
+            void *pointer = AUDIOFS_MALLOC_NO_TRACE(size);                      \
             AUDIOFS_TRACEVAL_PREFIX(pointer, "p", "AUDIOFS_MALLOC");            \
             pointer;                                                            \
         })
@@ -120,7 +125,7 @@ extern int             go_log_level;
         ({                                                                      \
             AUDIOFS_TRACEVAL_PREFIX(count, "d", "AUDIOFS_CALLOC");              \
             AUDIOFS_TRACEVAL_PREFIX((size_t)(size), PRIuPTR, "AUDIOFS_CALLOC"); \
-            void *pointer = AUDIOFS_CALLOC_NO_TRACE(count, size);                     \
+            void *pointer = AUDIOFS_CALLOC_NO_TRACE(count, size);               \
             AUDIOFS_TRACEVAL_PREFIX(pointer, "p", "AUDIOFS_CALLOC");            \
             pointer;                                                            \
         })

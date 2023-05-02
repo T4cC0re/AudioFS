@@ -45,7 +45,8 @@ static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
  * @param size
  * @return whether the buffer was resized.
  */
-__attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_realloc(audiofs_buffer *buffer, uint32_t size) {
+__attribute__((__warn_unused_result__)) static inline bool
+audiofs_buffer_realloc(audiofs_buffer *buffer, uint32_t size) {
     if (!audiofs_buffer_ok(buffer)) { return false; }
 
     // If used outside C, we will block every other action

@@ -269,8 +269,7 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
     infof("Extracting chromaprint...");
 
     int              ret;
-    decoder_context *ptr      = AUDIOFS_MALLOC(sizeof(decoder_context));
-    AVStream *       avStream = fmt_ctx->streams[streamIndex];
+    decoder_context *ptr = AUDIOFS_MALLOC(sizeof(decoder_context));
 
     ptr->cookieA = _AUDIOFS_CONTEXT_MAGIC_A;
     ptr->cookieB = _AUDIOFS_CONTEXT_MAGIC_B;
@@ -537,7 +536,7 @@ chromaprint_end:
         if (!audiofs_buffer_realloc(pBuffer, size * sizeof(uint32_t))) {
             errorf("failed to resize the buffer!");
         } else {
-        memcpy(pBuffer->data, fingerprint, pBuffer->len);
+            memcpy(pBuffer->data, fingerprint, pBuffer->len);
         }
 
         //        AUDIOFS_BREAKPOINT;

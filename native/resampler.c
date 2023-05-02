@@ -58,7 +58,6 @@ enum SwrDitherType dither_by_name(const char *dither) {
 
     if (NULL == dither) { goto end; }
 
-    enum SwrDitherType swr_dither;
     if (0 == strcmp(dither, "none")) {
         return SWR_DITHER_NONE;
     } else if (0 == strcmp(dither, "rectangular")) {
