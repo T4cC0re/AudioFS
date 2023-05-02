@@ -1,6 +1,6 @@
 module gitlab.com/t4cc0re/audiofs
 
-go 1.19
+go 1.20
 
 require (
 	github.com/klauspost/compress v1.16.0

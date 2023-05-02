@@ -2,7 +2,10 @@ package native
 
 /*
 #cgo CFLAGS: -DAUDIOFS_CGO=1 -Werror=unused-result -D_FORTIFY_SOURCE=2 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC
-#cgo LDFLAGS: -fPIE -static -Wl,--start-group -lswresample-audiofs -lswscale-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz -Wl,--end-group
+#cgo !darwin LDFLAGS: -fPIE
+
+#cgo !darwin LDFLAGS: -static -Wl,--start-group -lswresample-audiofs -lswscale-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz -Wl,--end-group
+#cgo darwin LDFLAGS: -framework VideoToolbox -framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework CoreServices -liconv -lswresample-audiofs -lswscale-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz
 
 #include "golang_glue.h"
 */

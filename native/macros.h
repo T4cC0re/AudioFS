@@ -83,8 +83,13 @@ extern int             go_log_level;
 #        define AUDIOFS_BREAKPOINT \
             { __asm int 3; }
 #    else
-#        define AUDIOFS_BREAKPOINT \
-            { asm("int $3"); }
+#        ifdef __aarch64__
+#            define AUDIOFS_BREAKPOINT \
+                { asm("brk #0"); }
+#        else
+#            define AUDIOFS_BREAKPOINT \
+                { asm("int $3"); }
+#        endif
 #    endif
 #    define debugf(...)                                      audiofs_log(AUDIOFS_LOG_DEBUG, __VA_ARGS__)
 #    define tracef(...)                                      audiofs_log(AUDIOFS_LOG_TRACE, __VA_ARGS__)
