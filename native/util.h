@@ -28,7 +28,7 @@ __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_bu
     return buffer;
 }
 
-static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
+__attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
     if (!ctx || ctx->cookie != _AUDIOFS_CONTEXT_MAGIC_A || ctx->self != ctx) { return false; }
 
     return true;
@@ -91,7 +91,7 @@ ret:
     return true;
 }
 
-static inline bool context_ok(struct decoder_context *ctx) {
+__attribute__((__warn_unused_result__)) static inline bool context_ok(struct decoder_context *ctx) {
     if (!ctx || ctx->cookieA != _AUDIOFS_CONTEXT_MAGIC_A || ctx->cookieB != _AUDIOFS_CONTEXT_MAGIC_B) { return false; }
 
     return true;

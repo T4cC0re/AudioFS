@@ -98,9 +98,10 @@ extern int             go_log_level;
 #    define AUDIOFS_PRINTVAL(val, print_type)                debugf(#    val "=%" print_type, val)
 #endif
 
+#define INT32(X) ((int32_t)((X) & INT32_MAX))
 #define MIN(X, Y)                      (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y)                      (((X) > (Y)) ? (X) : (Y))
-#define WITHIN_BOUNDS(min, check, max) (check > min ? (check <= max ? check : max) : min)
+#define WITHIN_BOUNDS(min, check, max) ((check) > (min) ? ((check) <= (max) ? (check) : (max)) : (min))
 
 // Use zero-initialized calloc rather than malloc
 #define AUDIOFS_MALLOC_NO_TRACE(size)        AUDIOFS_CALLOC_NO_TRACE(1, size)

@@ -373,7 +373,7 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
     uint8_t *out_samples        = NULL;
     int      max_dst_nb_samples = 0, dst_nb_samples = 0;
     int      linesize = 0;
-    int      swrdelay = swr_get_delay(ptr->swrContext, ptr->sample_rate);
+    int      swrdelay = INT32(swr_get_delay(ptr->swrContext, ptr->sample_rate));
     while (av_read_frame(ptr->avFormatContext, &packet) >= 0) {
         if (packet.stream_index == streamIndex) {
             /* send the packet with the compressed data to the decoder */
@@ -427,11 +427,12 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
                     //                    // first iteration, we need to set the upper bound, then set dst_nb_samples
                     //                    from it.
                     //
-                    dst_nb_samples = max_dst_nb_samples = av_rescale_rnd(
-                        swrdelay + frame->nb_samples,
-                        ptr->override_sample_rate,
-                        ptr->sample_rate,
-                        AV_ROUND_UP);
+                    dst_nb_samples = max_dst_nb_samples = INT32(
+                        av_rescale_rnd(
+                            swrdelay + frame->nb_samples,
+                            ptr->override_sample_rate,
+                            ptr->sample_rate,
+                            AV_ROUND_UP));
 
                     linesize = ptr->override_depth / 8 * ptr->override_channels * dst_nb_samples;
                     // We need a 32-byte aligned allocation for AVX instructions.
@@ -439,11 +440,13 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
                     AUDIOFS_PRINTVAL(out_samples, "p");
 
                 } else {
-                    dst_nb_samples = av_rescale_rnd(
-                        swrdelay + frame->nb_samples,
-                        ptr->override_sample_rate,
-                        ptr->sample_rate,
-                        AV_ROUND_UP);
+                    dst_nb_samples = INT32(
+                        av_rescale_rnd(
+                            swrdelay + frame->nb_samples,
+                            ptr->override_sample_rate,
+                            ptr->sample_rate,
+                            AV_ROUND_UP)
+                        );
                     linesize = ptr->override_depth / 8 * ptr->override_channels * dst_nb_samples;
                 }
                 AUDIOFS_PRINTVAL(dst_nb_samples, PRId32);

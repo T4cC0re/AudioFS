@@ -140,13 +140,13 @@ end:
     return swr_engine;
 }
 
+int setup_swr(struct decoder_context *ctx, enum SwrDitherType dither, enum SwrEngine resampler) {
 #define return_break        \
     {                       \
         AUDIOFS_BREAKPOINT; \
         return -1;          \
     }
 
-int setup_swr(struct decoder_context *ctx, enum SwrDitherType dither, enum SwrEngine resampler) {
     assert(context_ok(ctx));
 
     AUDIOFS_PRINTVAL(ctx, "p");

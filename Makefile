@@ -1,6 +1,7 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 ARCH := $(shell uname -m)
 
+ifeq ($(shell uname -s),Darwin)
 ifeq ($(ARCH),x86_64)
 GO := /usr/local/bin/go
 BREW := /usr/local/bin/brew
@@ -8,6 +9,10 @@ endif
 ifeq ($(ARCH),arm64)
 GO := /opt/homebrew/bin/go
 BREW := /opt/homebrew/bin/brew
+endif
+else
+GO := go
+BREW := brew
 endif
 
 .PHONY: all
@@ -75,3 +80,6 @@ clang-format:
 
 macos_packages:
 	$(BREW) install cmake wget fftw jq clang-format@11 jansson go
+
+packages:
+	apt install cmake libfftw3-dev libfftw3-3 nasm libjansson-dev libz-dev build-essential clang-format-11 jq git wget tar
