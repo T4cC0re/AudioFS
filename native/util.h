@@ -4,9 +4,10 @@
 
 #include "macros.h"
 #include "types.h"
-#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_buffer_alloc(uint32_t size) {
     audiofs_buffer *buffer = AUDIOFS_MALLOC(sizeof(audiofs_buffer));
@@ -32,6 +33,54 @@ __attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(aud
     if (!ctx || ctx->cookie != _AUDIOFS_CONTEXT_MAGIC_A || ctx->self != ctx) { return false; }
 
     return true;
+}
+
+
+__attribute__((__warn_unused_result__)) static inline char *generate_random_string(int length) {
+    char *random_string = NULL;
+    int urandom_fd = -1;
+    int i;
+
+    if (length < 1) {
+        errorf("Error: length should be >= 1\n");
+        return NULL;
+    }
+
+    random_string = malloc(sizeof(char) * (length + 1));
+    if (!random_string) {
+        errorf("Error: couldn't allocate memory for the string\n");
+        return NULL;
+    }
+
+    urandom_fd = open("/dev/urandom", O_RDONLY);
+    if (urandom_fd == -1) {
+        errorf("Error: couldn't open /dev/urandom\n");
+        free(random_string);
+        return NULL;
+    }
+
+    for (i = 0; i < length; ++i) {
+        unsigned char random_byte = 0;
+        if (read(urandom_fd, &random_byte, sizeof(random_byte)) != sizeof(random_byte)) {
+            printf("Error: couldn't read from /dev/urandom\n");
+            free(random_string);
+            close(urandom_fd);
+            return NULL;
+        }
+        random_byte = random_byte % 62;
+        if (random_byte < 10) {
+            random_string[i] = '0' + random_byte;
+        } else if (random_byte < 36) {
+            random_string[i] = 'A' + (random_byte - 10);
+        } else {
+            random_string[i] = 'a' + (random_byte - 36);
+        }
+    }
+
+    random_string[length] = '\0';
+    close(urandom_fd);
+
+    return random_string;
 }
 
 /**

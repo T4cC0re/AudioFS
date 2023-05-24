@@ -23,7 +23,7 @@ import (
 func init() {
 	C.audiofs_libav_setup()
 	data := COnwedByteSliceFromAudioFSBuffer(unsafe.Pointer(C.test_buffer))
-	println(string(data))
+	fmt.Printf("Test Buffer from C: %s\n", string(data))
 	fmt.Printf("build mode: %s\n", mode)
 }
 
@@ -107,6 +107,6 @@ func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
 	C.pthread_mutex_lock(&buffer.used_outside_audiofs)
 	C.pthread_mutex_unlock(&buffer.lock)
 
-	//return unsafe.Slice((*byte)(data3), int(len2))
+	return unsafe.Slice((*byte)(buffer.data), int(buffer.len))
 	return nil
 }

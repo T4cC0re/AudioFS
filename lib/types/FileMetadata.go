@@ -46,6 +46,7 @@ type FileMetadata struct {
 		TimeBaseNum int64    `json:"time_base_num"`
 		TimeBaseDen int64    `json:"time_base_den"`
 		TimeBase    *big.Rat `json:"time_base"`
+		Chromaprint string   `json:"chromaprint,omitempty"`
 	} `json:"streams"`
 }
 
