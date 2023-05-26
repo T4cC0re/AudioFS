@@ -4,9 +4,9 @@
 
 #include "macros.h"
 #include "types.h"
+#include <fcntl.h>
 #include <stdbool.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_buffer_alloc(uint32_t size) {
@@ -35,11 +35,10 @@ __attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(aud
     return true;
 }
 
-
 __attribute__((__warn_unused_result__)) static inline char *generate_random_string(int length) {
     char *random_string = NULL;
-    int urandom_fd = -1;
-    int i;
+    int   urandom_fd    = -1;
+    int   i;
 
     if (length < 1) {
         errorf("Error: length should be >= 1\n");

@@ -13,8 +13,12 @@
 #include "util.h"
 
 // defined in transcode.c
-extern int do_transcode(const char *from_path, AVFormatContext * from_context, const char *to, const AVOutputFormat *oformat,
-                        const char *format_name);
+extern int do_transcode(
+    const char *          from_path,
+    AVFormatContext *     from_context,
+    const char *          to,
+    const AVOutputFormat *oformat,
+    const char *          format_name);
 
 audiofs_buffer *test_buffer;
 
@@ -431,12 +435,11 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
                     //                    // first iteration, we need to set the upper bound, then set dst_nb_samples
                     //                    from it.
                     //
-                    dst_nb_samples = max_dst_nb_samples = INT32(
-                        av_rescale_rnd(
-                            swrdelay + frame->nb_samples,
-                            ptr->override_sample_rate,
-                            ptr->sample_rate,
-                            AV_ROUND_UP));
+                    dst_nb_samples = max_dst_nb_samples = INT32(av_rescale_rnd(
+                        swrdelay + frame->nb_samples,
+                        ptr->override_sample_rate,
+                        ptr->sample_rate,
+                        AV_ROUND_UP));
 
                     linesize = ptr->override_depth / 8 * ptr->override_channels * dst_nb_samples;
                     // We need a 32-byte aligned allocation for AVX instructions.
@@ -444,14 +447,12 @@ extract_chromaprint(AVFormatContext *fmt_ctx, unsigned int streamIndex, audiofs_
                     AUDIOFS_PRINTVAL(out_samples, "p");
 
                 } else {
-                    dst_nb_samples = INT32(
-                        av_rescale_rnd(
-                            swrdelay + frame->nb_samples,
-                            ptr->override_sample_rate,
-                            ptr->sample_rate,
-                            AV_ROUND_UP)
-                    );
-                    linesize = ptr->override_depth / 8 * ptr->override_channels * dst_nb_samples;
+                    dst_nb_samples = INT32(av_rescale_rnd(
+                        swrdelay + frame->nb_samples,
+                        ptr->override_sample_rate,
+                        ptr->sample_rate,
+                        AV_ROUND_UP));
+                    linesize       = ptr->override_depth / 8 * ptr->override_channels * dst_nb_samples;
                 }
                 AUDIOFS_PRINTVAL(dst_nb_samples, PRId32);
 
@@ -567,7 +568,6 @@ chromaprint_end:
 
 __attribute__((used)) __attribute__((hot)) __attribute__((warn_unused_result)) char *
 get_metadate_from_file(char *path) {
-
     // region variables
     infof("getting metadata from '%s'", path);
     AVFormatContext *  fmt_ctx = avformat_alloc_context();
@@ -631,23 +631,22 @@ get_metadate_from_file(char *path) {
 
     // Stream metadata:
     for (unsigned int i = 0; i < fmt_ctx->nb_streams; ++i) {
-        AVStream *stream                   = fmt_ctx->streams[i];
-        tag                                = NULL;
+        AVStream *stream = fmt_ctx->streams[i];
+        tag              = NULL;
 
         AUDIOFS_PRINTVAL(fmt_ctx->streams[i]->codecpar, "p");
         if (fmt_ctx->streams[i] == NULL || fmt_ctx->streams[i]->codecpar == NULL) { continue; }
         if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-
-            //TODO: Make do_transcode handle a passed stream ID.
+            // TODO: Make do_transcode handle a passed stream ID.
             /// Hook into transcoding pipeline
-            int handle = do_transcode(NULL, fmt_ctx, "AudioFS internal buffer", NULL, "chromaprint");
+            int         handle = do_transcode(NULL, fmt_ctx, "AudioFS internal buffer", NULL, "chromaprint");
             struct stat s;
-            int status;
-            char * mapped;
-            status = fstat (handle, & s); //TODO: Check return
+            int         status;
+            char *      mapped;
+            status = fstat(handle, &s); // TODO: Check return
 
             /* Memory-map the file. */
-            mapped = mmap (0, s.st_size +1, PROT_READ|PROT_WRITE, MAP_PRIVATE, handle, 0); //TODO check pointer
+            mapped = mmap(0, s.st_size + 1, PROT_READ | PROT_WRITE, MAP_PRIVATE, handle, 0); // TODO check pointer
             mapped[s.st_size] = '\0';
 
             infof("Chromaprint: %s\n", mapped);
@@ -655,10 +654,9 @@ get_metadate_from_file(char *path) {
             json_object_set_new(json_streams[i], "chromaprint", json_string(mapped));
 
             // Close the AVIO buffer:
-            munmap(mapped, s.st_size +1);
+            munmap(mapped, s.st_size + 1);
             audiofs_avio_close(handle);
         }
-
 
         json_object_set_new(json_streams[i], "index", json_integer(fmt_ctx->streams[i]->index));
         json_object_set_new(json_streams[i], "nb_frames", json_integer(fmt_ctx->streams[i]->nb_frames));
