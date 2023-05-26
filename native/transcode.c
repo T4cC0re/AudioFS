@@ -121,8 +121,7 @@ static int open_input_file_with_format_context(AVFormatContext *ctx) {
  * @return
  */
 __attribute__((deprecated)) static int open_input_file(const char *filename) {
-    int          ret;
-    unsigned int i;
+    int ret;
     ifmt_ctx = NULL;
     if ((ret = avformat_open_input(&ifmt_ctx, filename, NULL, NULL)) < 0) {
         errorf("Cannot open input file\n");
@@ -252,20 +251,14 @@ static int open_output_file(const AVOutputFormat *oformat, const char *format_na
     av_dump_format(ofmt_ctx, 0, filename, 1);
 
     if (!(ofmt_ctx->oformat->flags & AVFMT_NOFILE)) {
-        int handle = audiofs_avio_open();
-        if (handle < 0) {
+        void *handle = audiofs_avio_open(filename);
+        if (handle == NULL) {
             errorf("Could not open output file");
-            return handle;
+            return -1;
         }
-        unsigned char *buffer   = av_malloc(4096);
-        AVIOContext *  avio_ctx = avio_alloc_context(
-            buffer,
-            4096,
-            1,
-            (void *)handle,
-            &audiofs_avio_read,
-            &audiofs_avio_write,
-            &audiofs_avio_seek);
+        unsigned char *buffer = av_malloc(4096);
+        AVIOContext *  avio_ctx
+            = avio_alloc_context(buffer, 4096, 1, handle, &audiofs_avio_read, &audiofs_avio_write, &audiofs_avio_seek);
         ofmt_ctx->pb = avio_ctx;
         if (ret < 0) {
             errorf("Could not open output file '%s'", filename);
@@ -536,7 +529,7 @@ static int flush_encoder(int stream_index) {
     return encode_write_frame(stream_index, 1);
 }
 
-int do_transcode(
+audiofs_avio_handle *do_transcode(
     const char *          from_path,
     AVFormatContext *     from_context,
     const char *          to,
@@ -545,8 +538,7 @@ int do_transcode(
     volatile int ret;
     AVPacket *   packet = NULL;
     int          stream_index;
-    //    int          i;
-    int selected_stream = 0;
+    int          selected_stream = 0;
 
     if (from_path != NULL) {
         if ((ret = open_input_file(from_path)) < 0) { goto end; }
@@ -642,18 +634,20 @@ end:
 
         avformat_close_input(&ifmt_ctx);
     }
-    int handle = 0;
+    audiofs_avio_handle *handle = NULL;
     if (ofmt_ctx && !(ofmt_ctx->oformat->flags & AVFMT_NOFILE)) {
         // Extract out file handle, so the caller can read the transcoded data.
         avio_flush(ofmt_ctx->pb);
-        handle = (int)ofmt_ctx->pb->opaque;
-        infof("extracted shared memory handle: %d\n", handle);
+        handle = ofmt_ctx->pb->opaque;
+        infof("AudioFS AVIO handle: %p\n", handle);
+        infof("extracted shared memory file handle: %d\n", audiofs_avio_get_handle(handle));
+        infof("memory backed?: %d\n", audiofs_avio_is_memory_backed(handle));
     }
     avformat_free_context(ofmt_ctx);
 
     if (ret < 0) {
         errorf("Error occurred: %s\n", av_err2str(ret));
-        return ret;
+        return NULL;
     }
 
     return handle;
