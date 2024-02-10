@@ -57,7 +57,7 @@ func go_print(level C.int, function *C.char, file *C.char, line C.int, string *C
 //export get_setting_string
 func get_setting_string(setting *C.char) *C.char {
 	str := C.GoString(setting)
-	return C.CString(config.Config.GetString(str))
+  return C.CString(config.Config.GetString(str))
 }
 
 //export get_setting_int

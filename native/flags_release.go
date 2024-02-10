@@ -9,4 +9,5 @@ package native
 #cgo arm64 LDFLAGS: -L${SRCDIR}/dependencies/release_arm64/built/lib
 */
 import "C"
+
 var mode = "release"

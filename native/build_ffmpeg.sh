@@ -44,7 +44,7 @@ fi
 #sudo apt install -y libfftw3-3 libfftw3-dev
 
 mkdir -p "${DEP_DIR}/ffmpeg"
-wget -cO "${DEP_DIR}/ffmpeg".tar.gz "https://ffmpeg.org/releases/ffmpeg-6.0.tar.gz"
+wget -cO "${DEP_DIR}/ffmpeg".tar.gz "https://ffmpeg.org/releases/ffmpeg-6.1.1.tar.gz"
 tar xf "${DEP_DIR}/ffmpeg".tar.gz -C "${DEP_DIR}/ffmpeg" --strip-components 1
 cd "${DEP_DIR}/ffmpeg"
 

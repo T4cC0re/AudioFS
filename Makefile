@@ -43,11 +43,17 @@ native/dependencies/release_$(ARCH)/built/lib/libavcodec-audiofs.a: native/depen
 native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a: native/dependencies/non-release_$(ARCH)/built/lib/libchromaprint_audiofs.a
 	cd native && ./build_ffmpeg.sh non-release
 
-native/dependencies/release_$(ARCH)/built/lib/libchromaprint_audiofs.a:
+native/dependencies/release_$(ARCH)/built/lib/libchromaprint_audiofs.a: native/dependencies/release_$(ARCH)/built/lib/libfftw3_audiofs.a
 	cd native && ./build_chromaprint.sh release
 
-native/dependencies/non-release_$(ARCH)/built/lib/libchromaprint_audiofs.a:
+native/dependencies/non-release_$(ARCH)/built/lib/libchromaprint_audiofs.a: native/dependencies/non-release_$(ARCH)/built/lib/libfftw3_audiofs.a
 	cd native && ./build_chromaprint.sh non-release
+	
+native/dependencies/release_$(ARCH)/built/lib/libfftw3_audiofs.a:
+	cd native && ./build_fftw.sh release
+
+native/dependencies/non-release_$(ARCH)/built/lib/libfftw3_audiofs.a:
+	cd native && ./build_fftw.sh non-release
 
 .PHONY: bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs.h
 bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs.h: native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a

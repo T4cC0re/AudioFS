@@ -24,8 +24,6 @@ if [ "release" == "${1}" ]; then # when building release version, use fat LTO
   export LDFLAGS='-flto=full'
 fi
 
-#sudo apt install -y libfftw3-3 libfftw3-dev
-
 mkdir -p "${DEP_DIR}/chromaprint"
 wget -cO "${DEP_DIR}/chromaprint.tar.gz" "https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-1.5.1.tar.gz"
 tar xf "${DEP_DIR}/chromaprint.tar.gz" -C "${DEP_DIR}/chromaprint" --strip-components 1

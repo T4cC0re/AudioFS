@@ -35,6 +35,7 @@
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/mem.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 
@@ -660,6 +661,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    return do_transcode(argv[1], argv[2], NULL, "aiff");
+    return do_transcode(argv[1], argv[2], NULL, NULL, "aiff");
 }
 #endif
