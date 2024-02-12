@@ -299,23 +299,29 @@ get_metadate_from_file(char *path) {
         if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             // TODO: Make do_transcode handle a passed stream ID.
             /// Hook into transcoding pipeline
-            audiofs_avio_handle *avio_handle = do_transcode(NULL, fmt_ctx, "memory", NULL, "chromaprint");
-            int                  handle      = audiofs_avio_get_handle(avio_handle);
-            struct stat          s;
-            int                  status;
-            char *               mapped;
-            status = fstat(handle, &s); // TODO: Check return
+            audiofs_avio_handle *avio_handle = do_transcode(NULL, fmt_ctx, "memory", NULL, "aiff"); // "chromaprint");
+            infof("do_transcode: ok\n");
+            off_t size = audiofs_avio_get_size(avio_handle);
+            char *mapped;
+
+            if (size <= 0) {
+                errorf("returned file handle is has 0 bytes.");
+                goto end;
+            }
+
+            //            infof("size: %lld\n", s.st_size);
 
             /* Memory-map the file. */
-            mapped = mmap(0, s.st_size + 1, PROT_READ | PROT_WRITE, MAP_PRIVATE, handle, 0); // TODO check pointer
-            mapped[s.st_size] = '\0';
+            //            mapped = mmap(0, s.st_size + 1, PROT_READ | PROT_WRITE, MAP_PRIVATE, handle, 0); // TODO check
+            //            pointer mapped[s.st_size] = '\0';
+            infof("mapped: %p\n", avio_handle->buffer->data);
 
-            infof("Chromaprint: %s\n", mapped);
+            infof("Chromaprint: %s\n", avio_handle->buffer->data);
 
-            json_object_set_new(json_streams[i], "chromaprint", json_string(mapped));
+            //            json_object_set_new(json_streams[i], "chromaprint", json_string(mapped));
 
             // Close the AVIO buffer:
-            munmap(mapped, s.st_size + 1);
+            //            munmap(mapped, s.st_size + 1);
             audiofs_avio_close(&avio_handle);
         }
 
@@ -401,6 +407,8 @@ get_metadate_from_file(char *path) {
     json_decref(json_file_format);
     json_decref(json_file);
     json_decref(json);
+
+end:
 
     AUDIOFS_FREE(json_streams);
     AUDIOFS_FREE(json_streams_metadata);

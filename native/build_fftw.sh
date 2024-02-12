@@ -29,7 +29,8 @@ wget -cO "${DEP_DIR}/fftw3.tar.gz" "https://fftw.org/fftw-3.3.10.tar.gz"
 tar xf "${DEP_DIR}/fftw3.tar.gz" -C "${DEP_DIR}/fftw3" --strip-components 1
 cd "${DEP_DIR}/fftw3"
 
-./configure --prefix="${DEP_DIR}/built" --enable-threads --with-combined-threads --enable-avx --enable-avx2 --enable-sse2 --program-suffix=audiofs
+./configure --prefix="${DEP_DIR}/built" --enable-threads --with-combined-threads --program-suffix=audiofs
+# --enable-avx --enable-avx2 --enable-sse2
 make
 make install
 ln -s "${DEP_DIR}/built/lib/libfftw3.a" "${DEP_DIR}/built/lib/libfftw3_audiofs.a"

@@ -18,7 +18,9 @@ extern char *chromaprint_from_file(const char *path);
 // endregion libav.c
 
 // region logbuffer.c
-extern void audiofs_log_level_set(int level);
+extern void     audiofs_log_level_set(int level);
+extern uint64_t c_allocs;
+extern uint64_t c_frees;
 // endregion logbuffer.c
 
 extern audiofs_buffer *test_buffer;

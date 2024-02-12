@@ -1,6 +1,22 @@
 #ifndef NATIVE_MACROS_H
 #define NATIVE_MACROS_H
 
+#if defined(__linux__)
+// https://linux.die.net/man/3/malloc_usable_size
+#    include <malloc.h>
+#define portable_ish_malloced_size(ptr) malloc_usable_size((void *)ptr)
+#elif defined(__APPLE__)
+// https://www.unix.com/man-page/osx/3/malloc_size/
+#    include <malloc/malloc.h>
+#define portable_ish_malloced_size(ptr) malloc_size(ptr)
+#elif defined(_WIN32)
+// https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/msize
+#    include <malloc.h>
+#define portable_ish_malloced_size(ptr)  _msize((void *)ptr)
+#else
+#    error "oops, I don't know this system"
+#endif
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +46,8 @@ extern pthread_mutex_t go_log_mutex;
 extern char *          go_log_buffer;
 extern int             go_log_buffer_len;
 extern int             go_log_level;
+extern uint64_t        c_allocs;
+extern uint64_t        c_frees;
 
 #    define audiofs_log(level, ...)                                                                                   \
         ({                                                                                                            \
@@ -103,16 +121,23 @@ extern int             go_log_level;
 #define MAX(X, Y)                      (((X) > (Y)) ? (X) : (Y))
 #define WITHIN_BOUNDS(min, check, max) ((check) > (min) ? ((check) <= (max) ? (check) : (max)) : (min))
 
+__attribute__((__warn_unused_result__)) __attribute__((always_inline)) __attribute__((used)) static inline void *
+AUDIOFS_CALLOC_NO_TRACE(int count, size_t size) {
+    void *ptr = calloc(count, (size_t)(size));
+    if (ptr > 0) { c_allocs += count * size; }
+    return ptr;
+}
 // Use zero-initialized calloc rather than malloc
-#define AUDIOFS_MALLOC_NO_TRACE(size)        AUDIOFS_CALLOC_NO_TRACE(1, size)
-#define AUDIOFS_CALLOC_NO_TRACE(count, size) calloc(count, (size_t)(size))
-// Free and set to NULL, but only if the incoming pointer is not NULL already
-#define AUDIOFS_FREE_NO_TRACE(ptr) \
-    {                              \
-        if ((ptr) != NULL) {       \
-            free(ptr);             \
-            (ptr) = NULL;          \
-        }                          \
+#define AUDIOFS_MALLOC_NO_TRACE(size) AUDIOFS_CALLOC_NO_TRACE(1, size)
+// #define AUDIOFS_CALLOC_NO_TRACE(count, size) calloc(count, (size_t)(size))
+//  Free and set to NULL, but only if the incoming pointer is not NULL already
+#define AUDIOFS_FREE_NO_TRACE(ptr)                      \
+    {                                                   \
+        if ((ptr) != NULL) {                            \
+            c_frees += portable_ish_malloced_size(ptr); \
+            free(ptr);                                  \
+            (ptr) = NULL;                               \
+        }                                               \
     }
 
 #ifdef AUDIOFS_NO_TRACE

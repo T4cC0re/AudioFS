@@ -641,7 +641,7 @@ end:
         avio_flush(ofmt_ctx->pb);
         handle = ofmt_ctx->pb->opaque;
         infof("AudioFS AVIO handle: %p\n", handle);
-        infof("extracted shared memory file handle: %d\n", audiofs_avio_get_handle(handle));
+        infof("extracted shared memory file handle: %p\n", handle);
         infof("memory backed?: %d\n", audiofs_avio_is_memory_backed(handle));
     }
     avformat_free_context(ofmt_ctx);

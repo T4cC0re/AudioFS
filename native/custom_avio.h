@@ -5,8 +5,18 @@
 #ifndef NATIVE_CUSTOM_AVIO_H
 #define NATIVE_CUSTOM_AVIO_H
 
+#include "types.h"
 #include <inttypes.h>
 #include <stdbool.h>
+#include <sys/mman.h>
+
+struct audiofs_avio_handle {
+    int             file;
+    bool            in_memory;
+    audiofs_buffer *buffer;
+    uint64_t        apparent_size;
+    uint64_t        position;
+};
 
 typedef struct audiofs_avio_handle audiofs_avio_handle;
 
@@ -76,12 +86,12 @@ void *audiofs_avio_open(const char *filename);
 void audiofs_avio_close(audiofs_avio_handle **handle);
 
 /**
- * Returns a file handle from a AudioFS AVIO handle.
+ * Returns (file) size from a AudioFS AVIO handle.
  *
  * @param handle AudioFS AVIO handle
- * @return file handle on success, or -1 on error.
+ * @return size on success, or -1 on error.
  */
-int audiofs_avio_get_handle(audiofs_avio_handle *handle);
+off_t audiofs_avio_get_size(audiofs_avio_handle *handle);
 
 /**
  * Returns whether an AudioFS AVIO handle is in-memory, or on-disk.

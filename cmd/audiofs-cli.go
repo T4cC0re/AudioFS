@@ -82,6 +82,8 @@ func main() {
 			fmt.Printf("%d\n", len(d))
 			var a types.FileMetadata
 			fmt.Printf("%+v\n", util.UnmarshallCompressed(d, &a))
+			allocs, frees := native.GetAllocatorMetrics()
+			fmt.Printf("%+v, %+v\n", allocs, frees)
 		},
 	}
 

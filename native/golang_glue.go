@@ -110,3 +110,7 @@ func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
 	return unsafe.Slice((*byte)(buffer.data), int(buffer.len))
 	return nil
 }
+
+func GetAllocatorMetrics() (int64, int64) {
+    return int64(C.c_allocs), int64(C.c_frees)
+}

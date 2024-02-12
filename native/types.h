@@ -17,7 +17,7 @@
 typedef struct audiofs_buffer {
     uint32_t        cookie;
     void *          data;
-    uint32_t        len;
+    uint64_t        len;
     pthread_mutex_t lock;
     void *          self;
     pthread_mutex_t used_outside_audiofs; // Lock this mutex when used outside of C code

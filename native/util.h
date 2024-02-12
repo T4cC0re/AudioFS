@@ -9,7 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 
-__attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_buffer_alloc(uint32_t size) {
+__attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_buffer_alloc(uint64_t size) {
     audiofs_buffer *buffer = AUDIOFS_MALLOC(sizeof(audiofs_buffer));
     if (buffer == NULL) { return NULL; }
     buffer->cookie = _AUDIOFS_CONTEXT_MAGIC_A;
@@ -25,6 +25,8 @@ __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_bu
         AUDIOFS_FREE(buffer);
         return NULL;
     }
+    pthread_mutex_unlock(&buffer->used_outside_audiofs);
+    pthread_mutex_unlock(&buffer->lock);
 
     return buffer;
 }
@@ -94,16 +96,18 @@ __attribute__((__warn_unused_result__)) static inline char *generate_random_stri
  * @return whether the buffer was resized.
  */
 __attribute__((__warn_unused_result__)) static inline bool
-audiofs_buffer_realloc(audiofs_buffer *buffer, uint32_t size) {
+audiofs_buffer_realloc(audiofs_buffer *buffer, uint64_t size) {
     if (!audiofs_buffer_ok(buffer)) { return false; }
 
-    // If used outside C, we will block every other action
-    if (0 != pthread_mutex_trylock(&buffer->used_outside_audiofs)) {
-        errorf("tried to resize a buffer which was passed outside of AudioFS. Denied.");
-        AUDIOFS_PRINTVAL(buffer, "p");
-        return false;
-    }
     pthread_mutex_lock(&buffer->lock);
+
+    //    AUDIOFS_PRINTVAL(buffer->used_outside_audiofs, "p");
+    // If used outside C, we will block every other action
+    //    if (0 != pthread_mutex_trylock(&buffer->used_outside_audiofs)) {
+    //        errorf("tried to resize a buffer which was passed outside of AudioFS. Denied.");
+    //        AUDIOFS_PRINTVAL(buffer, "p");
+    //        return false;
+    //    }
     // Because modifications (including taking usage outside C) happens with a locked buffer, we can safely call
     // unlock here.
     pthread_mutex_unlock(&buffer->used_outside_audiofs);
@@ -126,6 +130,8 @@ audiofs_buffer_realloc(audiofs_buffer *buffer, uint32_t size) {
         if (buffer->len > size) { memset(new_ptr + buffer->len, 0, buffer->len - size); }
         buffer->len  = size;
         buffer->data = new_ptr;
+        c_frees += portable_ish_malloced_size(buffer->data);
+        c_allocs += size;
     }
 
     // emergency check to provide guarantee:
