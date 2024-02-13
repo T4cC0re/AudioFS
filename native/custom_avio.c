@@ -34,6 +34,10 @@ __attribute__((__nonnull__)) int audiofs_avio_read(void *opaque, uint8_t *buf, i
 
 __attribute__((__nonnull__)) int64_t audiofs_avio_resize_to(audiofs_avio_handle *handle, uint64_t buf_size) {
     while (handle->buffer->len < MAX(buf_size, handle->buffer->len)) {
+        if (buf_size < 0 || buf_size > INT64_MAX) {
+            errorf("input wraparound\n");
+            return -1;
+        }
         uint64_t new_size = 0;
         // We need to resize the buffer. By how much?
         if (handle->buffer->len >= 16 * 1024 * 1024) { new_size = handle->buffer->len + 16 * 1024 * 1024; }
@@ -135,10 +139,7 @@ __attribute__((__nonnull__)) int64_t audiofs_avio_seek(void *opaque, int64_t off
 }
 
 __attribute__((__nonnull__)) void *audiofs_avio_open(const char *filename) {
-    char *tmp  = NULL;
     int   file = -1;
-
-    AUDIOFS_PRINTVAL(tmp, "p");
 
     audiofs_avio_handle *handle = AUDIOFS_MALLOC(sizeof(audiofs_avio_handle));
     if (handle == NULL) {
@@ -146,22 +147,12 @@ __attribute__((__nonnull__)) void *audiofs_avio_open(const char *filename) {
         goto error;
     }
 
-    // Because both `audiofs_avio_open` and `open` return an int file handle, the rest of the code (including the other
-    // `audiofs_avio_*`-functions) works symantically identical.
     if (0 == memcmp(filename, "memory", strlen(filename))) {
         infof("using memory buffer");
-        tmp = generate_random_string(16);
-        debugf("shared memory name: %s\n", tmp);
-        /*
-         * First we allocate, then unlink a shared buffer with a random name.
-         * We immediately unlink it, so it automatically gets destroyed when the file handle is closed.
-         * This is done to prevent resource leaks.
-         */
         file           = 0;
         handle->buffer = audiofs_buffer_alloc(1024);
         if (handle->buffer < 0) {
             errorf("Failed to allocate shared memory buffer");
-            AUDIOFS_FREE(tmp);
             goto error;
         }
         debugf("shared memory handle: %p\n", handle);
@@ -186,7 +177,6 @@ __attribute__((__nonnull__)) void *audiofs_avio_open(const char *filename) {
 
 error:
     AUDIOFS_FREE(handle);
-    AUDIOFS_FREE(tmp);
     return NULL;
 }
 
@@ -201,12 +191,12 @@ __attribute__((__nonnull__)) void audiofs_avio_close(audiofs_avio_handle **handl
     AUDIOFS_FREE(*handle);
 }
 
-__attribute__((__nonnull__)) off_t audiofs_avio_get_size(audiofs_avio_handle *handle) {
+__attribute__((__nonnull__)) __attribute((pure)) off_t audiofs_avio_get_size(audiofs_avio_handle *handle) {
     if (handle->in_memory) {
         return handle->apparent_size;
     } else {
         struct stat s;
-        int         status = fstat(handle->file, &s); // TODO: Check return
+        int         status = fstat(handle->file, &s);
         if (status != 0) {
             errorf("returned file handle is not okay.");
             return -1;
@@ -220,7 +210,7 @@ __attribute__((__nonnull__)) off_t audiofs_avio_get_size(audiofs_avio_handle *ha
     }
 }
 
-__attribute__((__nonnull__)) bool audiofs_avio_is_memory_backed(audiofs_avio_handle *handle) {
+__attribute__((__nonnull__)) __attribute((pure)) bool audiofs_avio_is_memory_backed(audiofs_avio_handle *handle) {
     // TODO: Error checking
     return handle->in_memory;
 }

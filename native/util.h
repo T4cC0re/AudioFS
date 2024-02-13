@@ -31,7 +31,7 @@ __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_bu
     return buffer;
 }
 
-__attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
+__attribute((pure)) __attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
     if (!ctx || ctx->cookie != _AUDIOFS_CONTEXT_MAGIC_A || ctx->self != ctx) { return false; }
 
     return true;
@@ -145,7 +145,7 @@ ret:
     return true;
 }
 
-__attribute__((__warn_unused_result__)) static inline bool context_ok(struct decoder_context *ctx) {
+__attribute((pure)) __attribute__((__warn_unused_result__)) static inline bool context_ok(struct decoder_context *ctx) {
     if (!ctx || ctx->cookieA != _AUDIOFS_CONTEXT_MAGIC_A || ctx->cookieB != _AUDIOFS_CONTEXT_MAGIC_B) { return false; }
 
     return true;
@@ -156,7 +156,7 @@ __attribute__((__warn_unused_result__)) static inline bool context_ok(struct dec
  * @param depth         known bit-width for 32-bit formats
  * @return
  */
-static inline uint8_t sample_bits_by_format(int32_t sample_fmt, uint8_t depth) {
+__attribute((always_inline)) static inline uint8_t sample_bits_by_format(int32_t sample_fmt, uint8_t depth) {
     switch (sample_fmt) {
         case AV_SAMPLE_FMT_U8:
         case AV_SAMPLE_FMT_U8P:

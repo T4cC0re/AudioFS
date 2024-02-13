@@ -91,7 +91,7 @@ void audiofs_avio_close(audiofs_avio_handle **handle);
  * @param handle AudioFS AVIO handle
  * @return size on success, or -1 on error.
  */
-off_t audiofs_avio_get_size(audiofs_avio_handle *handle);
+__attribute((pure)) off_t audiofs_avio_get_size(audiofs_avio_handle *handle);
 
 /**
  * Returns whether an AudioFS AVIO handle is in-memory, or on-disk.
@@ -99,6 +99,6 @@ off_t audiofs_avio_get_size(audiofs_avio_handle *handle);
  * @param handle AudioFS AVIO handle
  * @return true if memory backed, false if file backed or invalid handle.
  */
-bool audiofs_avio_is_memory_backed(audiofs_avio_handle *handle);
+__attribute((pure)) bool audiofs_avio_is_memory_backed(audiofs_avio_handle *handle);
 
 #endif // NATIVE_CUSTOM_AVIO_H

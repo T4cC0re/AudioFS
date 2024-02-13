@@ -155,12 +155,12 @@ __attribute__((deprecated)) static int open_input_file(const char *filename) {
  *          failure
  */
 static int open_output_file(const AVOutputFormat *oformat, const char *format_name, const char *filename) {
-    AVStream *      out_stream;
-    AVStream *      in_stream;
-    AVCodecContext *dec_ctx, *enc_ctx;
-    const AVCodec * encoder;
-    int             ret;
-    unsigned int    i;
+    AVStream *      out_stream = NULL;
+    AVStream *      in_stream = NULL;
+    AVCodecContext *dec_ctx = NULL, *enc_ctx = NULL;
+    const AVCodec * encoder = NULL;
+    int             ret = 0;
+    unsigned int    i = 0;
 
     ofmt_ctx = NULL;
     avformat_alloc_output_context2(&ofmt_ctx, oformat, format_name, filename);
@@ -429,9 +429,9 @@ end:
 }
 
 static int init_filters(void) {
-    const char * filter_spec;
-    unsigned int i;
-    int          ret;
+    const char * filter_spec = NULL;
+    unsigned int i = 0;
+    int          ret = 0;
     filter_ctx = av_malloc(sizeof(*filter_ctx));
     if (!filter_ctx) { return AVERROR(ENOMEM); }
 
@@ -462,7 +462,7 @@ static int encode_write_frame(int stream_index, int flush) {
     FilteringContext *filter     = filter_ctx;
     AVFrame *         filt_frame = flush ? NULL : filter->filtered_frame;
     AVPacket *        enc_pkt    = filter->enc_pkt;
-    int               ret;
+    int               ret = 0;
 
     tracef("Encoding frame\n");
     /* encode filtered frame */
@@ -491,7 +491,7 @@ static int encode_write_frame(int stream_index, int flush) {
 
 static int filter_encode_write_frame(AVFrame *frame, int stream_index) {
     FilteringContext *filter = filter_ctx;
-    int               ret;
+    int               ret = 0;
 
     //    infof("Pushing decoded frame to filters\n");
     /* push the decoded frame into the filtergraph */
@@ -536,7 +536,7 @@ audiofs_avio_handle *do_transcode(
     const char *          to,
     const AVOutputFormat *oformat,
     const char *          format_name) {
-    volatile int ret;
+    volatile int ret = 0;
     AVPacket *   packet = NULL;
     int          stream_index;
     int          selected_stream = 0;

@@ -241,6 +241,8 @@ get_metadate_from_file(char *path) {
     json_t **          json_streams          = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
     json_t **          json_streams_metadata = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
     json_t **          json_streams_codec    = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
+    char *json_str = "";
+
     // endregion variables
 
     // Everything is now allocated. Let's open the file!
@@ -299,15 +301,19 @@ get_metadate_from_file(char *path) {
         if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             // TODO: Make do_transcode handle a passed stream ID.
             /// Hook into transcoding pipeline
-            audiofs_avio_handle *avio_handle = do_transcode(NULL, fmt_ctx, "memory", NULL, "aiff"); // "chromaprint");
+            audiofs_avio_handle *avio_handle = do_transcode(NULL, fmt_ctx, "memory", NULL, "chromaprint");
             infof("do_transcode: ok\n");
             off_t size = audiofs_avio_get_size(avio_handle);
-            char *mapped;
+            // char *mapped;
 
             if (size <= 0) {
                 errorf("returned file handle is has 0 bytes.");
+                audiofs_avio_close(&avio_handle);
                 goto end;
             }
+
+            char * chromaprint = AUDIOFS_MALLOC(size + 1);
+            strncpy(chromaprint, avio_handle->buffer->data, size);
 
             //            infof("size: %lld\n", s.st_size);
 
@@ -316,9 +322,9 @@ get_metadate_from_file(char *path) {
             //            pointer mapped[s.st_size] = '\0';
             infof("mapped: %p\n", avio_handle->buffer->data);
 
-            infof("Chromaprint: %s\n", avio_handle->buffer->data);
+            infof("Chromaprint: %s\n", chromaprint);
 
-            //            json_object_set_new(json_streams[i], "chromaprint", json_string(mapped));
+            json_object_set_new(json_streams[i], "chromaprint", json_string(chromaprint));
 
             // Close the AVIO buffer:
             //            munmap(mapped, s.st_size + 1);
@@ -395,7 +401,7 @@ get_metadate_from_file(char *path) {
     }
 
     // TODO: Dump to audiofs_buffer and return pointer to THAT.
-    char *json_str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
+    json_str = json_dumps(json, JSON_COMPACT | JSON_SORT_KEYS);
 
     // Free the JSON objects
     for (unsigned int i = 0; i < fmt_ctx->nb_streams; ++i) {

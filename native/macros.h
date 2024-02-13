@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define AUDIOFS_LOG_PANIC 0
 #define AUDIOFS_LOG_FATAL 1

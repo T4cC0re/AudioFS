@@ -10,6 +10,8 @@ import (
 	"gitlab.com/t4cc0re/audiofs/native"
 	"gitlab.com/t4cc0re/audiofs/serve"
 	"gitlab.com/t4cc0re/audiofs/util"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -75,15 +77,35 @@ func main() {
 		Long:  `analyzes a song and prints metadata about the file`,
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			val, err := native.GetMetadataFromFile(args[0])
-			fmt.Printf("%+v\n", val)
-			fmt.Printf("%+v\n", err)
-			d, err := util.MarshallCompressed(val)
-			fmt.Printf("%d\n", len(d))
-			var a types.FileMetadata
-			fmt.Printf("%+v\n", util.UnmarshallCompressed(d, &a))
-			allocs, frees := native.GetAllocatorMetrics()
-			fmt.Printf("%+v, %+v\n", allocs, frees)
+			err := filepath.Walk(args[0],
+				func(file string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					//fmt.Println(path, info.Size())
+
+					if !strings.HasSuffix(file, ".flac") {
+						return nil
+					}
+					//file := args[0]
+					val, err := native.GetMetadataFromFile(file)
+					logrus.Printf("%+v\n", val)
+					logrus.Printf("%+v\n", err)
+					d, err := util.MarshallCompressed(val)
+					logrus.Printf("%d\n", len(d))
+					var a types.FileMetadata
+					logrus.Printf("%+v\n", util.UnmarshallCompressed(d, &a))
+					allocs, frees := native.GetAllocatorMetrics()
+					logrus.Printf("%+v, %+v\n", allocs, frees)
+					if len(a.Streams) > 0 {
+						fmt.Fprintf(os.Stdout, "%s\t%s\n", a.Streams[0].Chromaprint, file)
+					}
+					return nil
+				})
+			if err != nil {
+				logrus.Println(err)
+			}
+
 		},
 	}
 

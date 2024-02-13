@@ -1,7 +1,7 @@
 package native
 
 /*
-#cgo CFLAGS: -DAUDIOFS_CGO=1 -Werror=unused-result -D_FORTIFY_SOURCE=2 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC
+#cgo CFLAGS: -DAUDIOFS_CGO=1 -Werror=unused-result -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC
 #cgo !darwin LDFLAGS: -fPIE
 
 #cgo !darwin LDFLAGS: -static -Wl,--start-group -lswresample-audiofs -lswscale-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz -Wl,--end-group
@@ -13,7 +13,6 @@ import "C"
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"gitlab.com/t4cc0re/audiofs/config"
 	"gitlab.com/t4cc0re/audiofs/lib/types"
@@ -23,8 +22,8 @@ import (
 func init() {
 	C.audiofs_libav_setup()
 	data := COnwedByteSliceFromAudioFSBuffer(unsafe.Pointer(C.test_buffer))
-	fmt.Printf("Test Buffer from C: %s\n", string(data))
-	fmt.Printf("build mode: %s\n", mode)
+	logrus.Printf("Test Buffer from C: %s\n", string(data))
+	logrus.Printf("build mode: %s\n", mode)
 }
 
 func ApplyLogrusLevel() {
@@ -57,7 +56,7 @@ func go_print(level C.int, function *C.char, file *C.char, line C.int, string *C
 //export get_setting_string
 func get_setting_string(setting *C.char) *C.char {
 	str := C.GoString(setting)
-  return C.CString(config.Config.GetString(str))
+	return C.CString(config.Config.GetString(str))
 }
 
 //export get_setting_int
@@ -95,7 +94,7 @@ func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
 	//println(data)
 	//println(leng)
 
-	fmt.Printf("%p\n", ptr)
+	logrus.Printf("%p\n", ptr)
 
 	buffer := (*C.audiofs_buffer)(ptr)
 	C.pthread_mutex_lock(&buffer.lock)
@@ -103,7 +102,7 @@ func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
 	//
 	//println(len2)
 	//data2 := unsafe.Pointer(uintptr(ptr) + uintptr(data))
-	fmt.Printf("%p\n", buffer.data)
+	logrus.Printf("%p\n", buffer.data)
 	C.pthread_mutex_lock(&buffer.used_outside_audiofs)
 	C.pthread_mutex_unlock(&buffer.lock)
 
@@ -112,5 +111,5 @@ func COnwedByteSliceFromAudioFSBuffer(ptr unsafe.Pointer) []byte {
 }
 
 func GetAllocatorMetrics() (int64, int64) {
-    return int64(C.c_allocs), int64(C.c_frees)
+	return int64(C.c_allocs), int64(C.c_frees)
 }

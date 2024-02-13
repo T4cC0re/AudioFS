@@ -21,7 +21,7 @@ if [ "release" == "${1}" ]; then # when building release version, use fat LTO
   DEP_DIR="${NATIVE_ROOT}/dependencies/release_$(uname -m)"
   export CFLAGS='-flto -ffat-lto-objects'
   export CXXFLAGS='-flto -ffat-lto-objects'
-  export LDFLAGS='-flto=full'
+  export LDFLAGS='-flto'
 fi
 
 mkdir -p "${DEP_DIR}/fftw3"

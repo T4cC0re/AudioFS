@@ -3,8 +3,8 @@ package util
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/klauspost/compress/zstd"
+	"github.com/sirupsen/logrus"
 	"gitlab.com/t4cc0re/audiofs/config"
 )
 
@@ -32,7 +32,7 @@ func UnmarshallCompressedWithAlgo(algo string, input []byte, v any) error {
 		var decoder, _ = zstd.NewReader(nil)
 		defer decoder.Close()
 		uncompressed, err = decoder.DecodeAll(input, make([]byte, 0, len(input)))
-		fmt.Printf("compressed: %d, JSON: %d\n", len(input), len(uncompressed))
+		logrus.Printf("compressed: %d, JSON: %d\n", len(input), len(uncompressed))
 	case "none", "":
 		// No compression? Nothing to do :D
 		uncompressed = input
@@ -57,7 +57,7 @@ func MarshallCompressedWithAlgo(algo string, level int, v any) ([]byte, error) {
 		var encoder, _ = zstd.NewWriter(nil, zstd.WithEncoderLevel(zstd.EncoderLevelFromZstd(level)))
 		defer encoder.Close()
 		buf2 := encoder.EncodeAll(buf, make([]byte, 0, len(buf)))
-		fmt.Printf("JSON: %d, compressed: %d\n", len(buf), len(buf2))
+		logrus.Printf("JSON: %d, compressed: %d\n", len(buf), len(buf2))
 		return buf2, nil
 	case "none", "":
 		return buf, nil
