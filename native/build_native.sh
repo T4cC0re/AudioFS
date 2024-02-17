@@ -9,7 +9,7 @@ export CC="${ROOT_DIR}cc_wrapper"
 OUTPUT="${2}"
 
 CFLAGS='-Werror=unused-result -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC -static-libstdc++'
-LDFLAGS='-framework CoreFoundation -framework CoreMedia -framework CoreServices -liconv -lswresample-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz'
+LDFLAGS='-lswresample-audiofs -lavformat-audiofs -lavutil-audiofs -lavcodec-audiofs -lavfilter-audiofs -lchromaprint_audiofs -lfftw3 -ljansson -lstdc++ -lm -lz'
 STATIC_FLAG='-static' 
 
 if [[ "arm64" == "$(uname -m)" ]]; then
@@ -34,7 +34,7 @@ fi
 if [[ $(uname -s ) == Darwin ]]; then
 STATIC_FLAG='-Bstatic'
     CFLAGS="${CFLAGS} -I${HOMEBREW}/include"
-    LDFLAGS="${LDFLAGS} -L${HOMEBREW}/lib"
+    LDFLAGS="${LDFLAGS} -framework CoreFoundation -framework CoreMedia -framework CoreServices -liconv -L${HOMEBREW}/lib"
 fi
 
 CFLAGS="${STATIC_FLAG} -I${DEP_DIR}/built/include ${CFLAGS}"
