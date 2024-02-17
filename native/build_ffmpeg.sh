@@ -83,7 +83,23 @@ echo "running configure. This might take a moment..."
   --disable-ffplay\
   --disable-ffmpeg\
   --disable-shared\
+  --disable-avdevice\
+  --disable-swscale\
   --disable-everything\
+  --disable-vdpau\
+  --disable-v4l2-m2m \
+  --disable-vaapi\
+  --disable-vdpau\
+  --disable-videotoolbox\
+  --disable-vulkan\
+  --disable-cuda-llvm\
+  --disable-cuvid\
+  --disable-d3d11va\
+  --disable-dxva2\
+  --disable-ffnvcodec\
+  --disable-nvdec\
+  --disable-nvenc\
+  --disable-amf\
   $(decoders) \
   $(demuxers) \
   $(muxers) \
