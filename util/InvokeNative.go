@@ -1,22 +1,28 @@
 package util
 
 import (
-    "encoding/json"
+	"encoding/json"
 	"errors"
-	"github.com/sirupsen/logrus"
-//	"gitlab.com/t4cc0re/audiofs/config"
-	"gitlab.com/t4cc0re/audiofs/lib/types"
+	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+	"gitlab.com/t4cc0re/audiofs/lib/types"
 )
 
+func GetMetadataFromFile(file string) (*types.FileMetadata, error) {
 
-func GetMetadataFromFile(path string) (*types.FileMetadata, error) {
-
-	JSON, err := exec.Command("./bin/native", path).Output()
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	JSON, err := exec.Command(path.Join(exPath, "native"), file).Output()
 	if err != nil {
 		logrus.Errorf("%+v", err)
-        return nil, err
+		return nil, err
 	}
 
 	val := types.FileMetadata{}
@@ -27,5 +33,3 @@ func GetMetadataFromFile(path string) (*types.FileMetadata, error) {
 
 	return &val, nil
 }
-
-
