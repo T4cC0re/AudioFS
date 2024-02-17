@@ -130,8 +130,8 @@ audiofs_buffer_realloc(audiofs_buffer *buffer, uint64_t size) {
         if (buffer->len > size) { memset(new_ptr + buffer->len, 0, buffer->len - size); }
         buffer->len  = size;
         buffer->data = new_ptr;
-        c_frees += portable_ish_malloced_size(buffer->data);
-        c_allocs += size;
+       // c_frees += portable_ish_malloced_size(buffer->data);
+       // c_allocs += size;
     }
 
     // emergency check to provide guarantee:

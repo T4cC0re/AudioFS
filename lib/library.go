@@ -3,7 +3,7 @@ package lib
 import (
 	"fmt"
 	"gitlab.com/t4cc0re/audiofs/config"
-	_ "gitlab.com/t4cc0re/audiofs/native"
+//	_ "gitlab.com/t4cc0re/audiofs/native"
 )
 
 type Error struct {

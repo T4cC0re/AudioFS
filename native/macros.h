@@ -125,7 +125,7 @@ extern uint64_t        c_frees;
 __attribute__((__warn_unused_result__)) __attribute__((always_inline)) __attribute__((used)) static inline void *
 AUDIOFS_CALLOC_NO_TRACE(int count, size_t size) {
     void *ptr = calloc(count, (size_t)(size));
-    if (ptr > 0) { c_allocs += count * size; }
+//    if (ptr > 0) { c_allocs += count * size; }
     return ptr;
 }
 // Use zero-initialized calloc rather than malloc
@@ -135,7 +135,6 @@ AUDIOFS_CALLOC_NO_TRACE(int count, size_t size) {
 #define AUDIOFS_FREE_NO_TRACE(ptr)                      \
     {                                                   \
         if ((ptr) != NULL) {                            \
-            c_frees += portable_ish_malloced_size(ptr); \
             free(ptr);                                  \
             (ptr) = NULL;                               \
         }                                               \

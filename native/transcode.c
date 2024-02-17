@@ -653,14 +653,3 @@ end:
 
     return handle;
 }
-#ifndef AUDIOFS_CGO
-
-int main(int argc, char **argv) {
-    if (argc != 3) {
-        errorf("Usage: %s <input file> <output file>\n", argv[0]);
-        return 1;
-    }
-
-    return do_transcode(argv[1], argv[2], NULL, NULL, "aiff");
-}
-#endif

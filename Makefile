@@ -15,6 +15,9 @@ GO := go
 BREW := brew
 endif
 
+CGO_ENABLED := 0
+export CGO_ENABLED
+
 .PHONY: all
 all: bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs-cli
 
