@@ -43,4 +43,4 @@ LDFLAGS="${STATIC_FLAG} -L${DEP_DIR}/built/lib ${LDFLAGS}"
 export CFLAGS
 export LDFLAGS
 
-"${CC}" -o "${OUTPUT}" ${CFLAGS} ${LDFLAGS} $(find . -type file -maxdepth 1 -name '*.c')
+"${CC}" -o "${OUTPUT}" ${CFLAGS} ${LDFLAGS} $(find . -type f -maxdepth 1 -name '*.c')
