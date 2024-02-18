@@ -67,6 +67,10 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     # - name: Autobuild
       # uses: github/codeql-action/autobuild@v3
+    - name: install packages
+      run: sudo apt install -y build-essential cmake libjansson-dev nasm libz-dev clang
+    - name: make compile_commands.json
+      run: make native/compile_commands.json 
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
