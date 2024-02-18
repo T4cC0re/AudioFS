@@ -1,0 +1,20 @@
+name: flawfinder
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: flawfinder_scan
+      uses: david-a-wheeler/flawfinder@2.0.19
+      with:
+        arguments: '--sarif ./native'
+        output: 'flawfinder_results.sarif'
