@@ -425,3 +425,21 @@ end:
 
     return json_str;
 }
+
+#ifndef AUDIOFS_CGO
+
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        errorf("Usage: %s <input file> <output file>\n", argv[0]);
+        return 1;
+    }
+
+    const char* json = get_metadate_from_file(argv[1]);
+
+    if (json == NULL) {
+        return 1;
+    }
+    fprintf(stdout, "%s\n", json);
+    return 0;
+}
+#endif

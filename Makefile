@@ -15,18 +15,24 @@ GO := go
 BREW := brew
 endif
 
+NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+
+CGO_ENABLED := 0
+export CGO_ENABLED
+
 .PHONY: all
-all: bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs-cli
+all: bin/non-release_$(ARCH)/audiofs-cli
 
 .PHONY: release
 ifeq ($(shell uname -s),Darwin)
 release:
-	arch -arch x86_64 make bin/release_x86_64/audiofs-cli bin/release_x86_64/audiofs.a bin/release_x86_64/audiofs.h
-	arch -arch arm64 make bin/release_arm64/audiofs-cli bin/release_arm64/audiofs.a bin/release_arm64/audiofs.h
+	arch -arch x86_64 make -j$(NPROC) bin/release_x86_64/audiofs-cli
+	arch -arch arm64 make -j$(NPROC) bin/release_arm64/audiofs-cli
 	mkdir -p bin/release_universal
 	lipo -create -output bin/release_universal/audiofs-cli bin/release_arm64/audiofs-cli bin/release_x86_64/audiofs-cli
+	lipo -create -output bin/release_universal/native bin/release_arm64/native bin/release_x86_64/native
 else
-release: bin/release_$(ARCH)/audiofs.a bin/release_$(ARCH)/audiofs-cli
+release: bin/release_$(ARCH)/audiofs-cli
 endif
 # The compile_commands.json file can be used to open native code in an IDE which supports them (such as CLion)
 .PHONY: native/compile_commands.json
@@ -55,21 +61,25 @@ native/dependencies/release_$(ARCH)/built/lib/libfftw3_audiofs.a:
 native/dependencies/non-release_$(ARCH)/built/lib/libfftw3_audiofs.a:
 	cd native && ./build_fftw.sh non-release
 
-.PHONY: bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs.h
-bin/non-release_$(ARCH)/audiofs.a bin/non-release_$(ARCH)/audiofs.h: native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a
-	$(GO) build --buildmode=c-archive -o $@ ./exports
+.PHONY: bin/non-release_$(ARCH)/native
+bin/non-release_$(ARCH)/native: native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a
+	mkdir -p bin/non-release_$(ARCH)
+	cd native && ./build_native.sh non-release "$(ROOT_DIR)$@"
 
 .PHONY: bin/non-release_$(ARCH)/audiofs-cli
-bin/non-release_$(ARCH)/audiofs-cli: native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a
+bin/non-release_$(ARCH)/audiofs-cli: native/dependencies/non-release_$(ARCH)/built/lib/libavcodec-audiofs.a bin/non-release_$(ARCH)/native
 	$(GO) build -o $@ ./cmd
 
-.PHONY: bin/release_$(ARCH)/audiofs.a bin/release_$(ARCH)/audiofs.h
-bin/release_$(ARCH)/audiofs.a bin/release_$(ARCH)/audiofs.h: native/dependencies/release_$(ARCH)/built/lib/libavcodec-audiofs.a
-	$(GO) build -tags release --buildmode=c-archive -o $@ ./exports
+.PHONY: bin/release_$(ARCH)/native
+bin/release_$(ARCH)/native: native/dependencies/release_$(ARCH)/built/lib/libavcodec-audiofs.a
+	mkdir -p bin/release_$(ARCH)
+	cd native && ./build_native.sh release "$(ROOT_DIR)$@"
+	strip "$@"
+
 
 .PHONY: bin/release_$(ARCH)/audiofs-cli
-bin/release_$(ARCH)/audiofs-cli: native/dependencies/release_$(ARCH)/built/lib/libavcodec-audiofs.a
-	$(GO) build -tags release -o $@ ./cmd
+bin/release_$(ARCH)/audiofs-cli: native/dependencies/release_$(ARCH)/built/lib/libavcodec-audiofs.a bin/release_$(ARCH)/native
+	$(GO) build -tags release -trimpath=true -buildvcs=true -ldflags="-s -w" -o $@ ./cmd
 
 .PHONY: clean
 clean:

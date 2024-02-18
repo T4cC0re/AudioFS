@@ -35,3 +35,4 @@ make
 make install
 ln -s "${DEP_DIR}/built/lib/libfftw3.a" "${DEP_DIR}/built/lib/libfftw3_audiofs.a"
 sedi 's/-lfftw3/-lfftw3_audiofs/g' "${DEP_DIR}/built/lib/pkgconfig/fftw3.pc"
+ln -s "${DEP_DIR}/built/lib/pkgconfig/fftw3.pc" "${DEP_DIR}/built/lib/pkgconfig/fftw3_audiofs.pc"
