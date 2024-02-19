@@ -44,10 +44,10 @@ static AVFormatContext *ofmt_ctx;
 typedef struct FilteringContext {
     AVFilterContext *buffersink_ctx;
     AVFilterContext *buffersrc_ctx;
-    AVFilterGraph *  filter_graph;
+    AVFilterGraph   *filter_graph;
 
     AVPacket *enc_pkt;
-    AVFrame * filtered_frame;
+    AVFrame  *filtered_frame;
 } FilteringContext;
 static FilteringContext *filter_ctx;
 
@@ -75,7 +75,7 @@ static int open_input_file_with_format_context(AVFormatContext *ctx) {
     for (i = 0; i < ifmt_ctx->nb_streams; i++) {
         AVStream *stream = ifmt_ctx->streams[i];
         if (stream->codecpar->codec_type != AVMEDIA_TYPE_AUDIO) { continue; }
-        const AVCodec * dec = avcodec_find_decoder(stream->codecpar->codec_id);
+        const AVCodec  *dec = avcodec_find_decoder(stream->codecpar->codec_id);
         AVCodecContext *codec_ctx;
         if (!dec) {
             errorf("Failed to find decoder for stream #%u\n", i);
@@ -155,12 +155,12 @@ __attribute__((deprecated)) static int open_input_file(const char *filename) {
  *          failure
  */
 static int open_output_file(const AVOutputFormat *oformat, const char *format_name, const char *filename) {
-    AVStream *      out_stream = NULL;
-    AVStream *      in_stream = NULL;
+    AVStream       *out_stream = NULL;
+    AVStream       *in_stream  = NULL;
     AVCodecContext *dec_ctx = NULL, *enc_ctx = NULL;
-    const AVCodec * encoder = NULL;
-    int             ret = 0;
-    unsigned int    i = 0;
+    const AVCodec  *encoder = NULL;
+    int             ret     = 0;
+    unsigned int    i       = 0;
 
     ofmt_ctx = NULL;
     avformat_alloc_output_context2(&ofmt_ctx, oformat, format_name, filename);
@@ -258,7 +258,7 @@ static int open_output_file(const AVOutputFormat *oformat, const char *format_na
             return -1;
         }
         unsigned char *buffer = av_malloc(4096);
-        AVIOContext *  avio_ctx
+        AVIOContext   *avio_ctx
             = avio_alloc_context(buffer, 4096, 1, handle, &audiofs_avio_read, &audiofs_avio_write, &audiofs_avio_seek);
         ofmt_ctx->pb = avio_ctx;
         if (ret < 0) {
@@ -281,13 +281,13 @@ static int
 init_filter(FilteringContext *fctx, AVCodecContext *dec_ctx, AVCodecContext *enc_ctx, const char *filter_spec) {
     char             args[512];
     int              ret            = 0;
-    const AVFilter * buffersrc      = NULL;
-    const AVFilter * buffersink     = NULL;
+    const AVFilter  *buffersrc      = NULL;
+    const AVFilter  *buffersink     = NULL;
     AVFilterContext *buffersrc_ctx  = NULL;
     AVFilterContext *buffersink_ctx = NULL;
-    AVFilterInOut *  outputs        = avfilter_inout_alloc();
-    AVFilterInOut *  inputs         = avfilter_inout_alloc();
-    AVFilterGraph *  filter_graph   = avfilter_graph_alloc();
+    AVFilterInOut   *outputs        = avfilter_inout_alloc();
+    AVFilterInOut   *inputs         = avfilter_inout_alloc();
+    AVFilterGraph   *filter_graph   = avfilter_graph_alloc();
 
     if (!outputs || !inputs || !filter_graph) {
         ret = AVERROR(ENOMEM);
@@ -429,10 +429,10 @@ end:
 }
 
 static int init_filters(void) {
-    const char * filter_spec = NULL;
-    unsigned int i = 0;
-    int          ret = 0;
-    filter_ctx = av_malloc(sizeof(*filter_ctx));
+    const char  *filter_spec = NULL;
+    unsigned int i           = 0;
+    int          ret         = 0;
+    filter_ctx               = av_malloc(sizeof(*filter_ctx));
     if (!filter_ctx) { return AVERROR(ENOMEM); }
 
     for (i = 0; i < ifmt_ctx->nb_streams; i++) {
@@ -458,13 +458,13 @@ static int init_filters(void) {
 }
 
 static int encode_write_frame(int stream_index, int flush) {
-    StreamContext *   stream     = stream_ctx;
+    StreamContext    *stream     = stream_ctx;
     FilteringContext *filter     = filter_ctx;
-    AVFrame *         filt_frame = flush ? NULL : filter->filtered_frame;
-    AVPacket *        enc_pkt    = filter->enc_pkt;
-    int               ret = 0;
+    AVFrame          *filt_frame = flush ? NULL : filter->filtered_frame;
+    AVPacket         *enc_pkt    = filter->enc_pkt;
+    int               ret        = 0;
 
-    tracef("Encoding frame\n");
+    // tracef("Encoding frame\n");
     /* encode filtered frame */
     av_packet_unref(enc_pkt);
 
@@ -481,7 +481,7 @@ static int encode_write_frame(int stream_index, int flush) {
         enc_pkt->stream_index = stream_index;
         av_packet_rescale_ts(enc_pkt, stream->enc_ctx->time_base, ofmt_ctx->streams[stream_index]->time_base);
 
-        tracef("Muxing frame\n");
+        // tracef("Muxing frame\n");
         /* mux encoded frame */
         ret = av_interleaved_write_frame(ofmt_ctx, enc_pkt);
     }
@@ -491,7 +491,7 @@ static int encode_write_frame(int stream_index, int flush) {
 
 static int filter_encode_write_frame(AVFrame *frame, int stream_index) {
     FilteringContext *filter = filter_ctx;
-    int               ret = 0;
+    int               ret    = 0;
 
     //    infof("Pushing decoded frame to filters\n");
     /* push the decoded frame into the filtergraph */
@@ -531,13 +531,13 @@ static int flush_encoder(int stream_index) {
 }
 
 audiofs_avio_handle *do_transcode(
-    const char *          from_path,
-    AVFormatContext *     from_context,
-    const char *          to,
+    const char           *from_path,
+    AVFormatContext      *from_context,
+    const char           *to,
     const AVOutputFormat *oformat,
-    const char *          format_name) {
-    volatile int ret = 0;
-    AVPacket *   packet = NULL;
+    const char           *format_name) {
+    volatile int ret    = 0;
+    AVPacket    *packet = NULL;
     int          stream_index;
     int          selected_stream = 0;
 
@@ -560,12 +560,12 @@ audiofs_avio_handle *do_transcode(
 
         if (packet->stream_index != selected_stream) { continue; }
         stream_index = packet->stream_index;
-        tracef("Demuxer gave frame of stream_index %u\n", stream_index);
+        // tracef("Demuxer gave frame of stream_index %u\n", stream_index);
 
         if (filter_ctx->filter_graph) {
             StreamContext *stream = stream_ctx;
 
-            tracef("Going to reencode&filter the frame\n");
+            // tracef("Going to reencode&filter the frame\n");
 
             av_packet_rescale_ts(packet, ifmt_ctx->streams[stream_index]->time_base, stream->dec_ctx->time_base);
             ret = avcodec_send_packet(stream->dec_ctx, packet);

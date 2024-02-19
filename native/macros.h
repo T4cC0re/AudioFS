@@ -4,23 +4,23 @@
 #if defined(__linux__)
 // https://linux.die.net/man/3/malloc_usable_size
 #    include <malloc.h>
-#define portable_ish_malloced_size(ptr) malloc_usable_size((void *)ptr)
+#    define portable_ish_malloced_size(ptr) malloc_usable_size((void *)ptr)
 #elif defined(__APPLE__)
 // https://www.unix.com/man-page/osx/3/malloc_size/
 #    include <malloc/malloc.h>
-#define portable_ish_malloced_size(ptr) malloc_size(ptr)
+#    define portable_ish_malloced_size(ptr) malloc_size(ptr)
 #elif defined(_WIN32)
 // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/msize
 #    include <malloc.h>
-#define portable_ish_malloced_size(ptr)  _msize((void *)ptr)
+#    define portable_ish_malloced_size(ptr) _msize((void *)ptr)
 #else
 #    error "oops, I don't know this system"
 #endif
 
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #define AUDIOFS_LOG_PANIC 0
 #define AUDIOFS_LOG_FATAL 1
@@ -33,8 +33,20 @@
 // Make sure all printf is redirected to stderr.
 #undef printf
 #ifndef AUDIOFS_CGO
-#    define printf(...)             _Pragma("GCC warning \"printf is discouraged, use errorf explicitly\"") errorf(__VA_ARGS__)
-#    define audiofs_log(level, ...) fprintf(stderr, __VA_ARGS__)
+#    define printf(format, ...) \
+        _Pragma("GCC warning \"printf is discouraged, use errorf explicitly\"") errorf(format, ##__VA_ARGS__)
+#    define audiofs_log(level, format, ...) \
+        fprintf(stderr, "[%s - %s:%d] " format, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
+#    define panicf(format, ...)                                    \
+        {                                                          \
+            audiofs_log(AUDIOFS_LOG_PANIC, format, ##__VA_ARGS__); \
+            exit(2);                                               \
+        }
+#    define fatalf(format, ...)                                    \
+        {                                                          \
+            audiofs_log(AUDIOFS_LOG_FATAL, format, ##__VA_ARGS__); \
+            exit(3);                                               \
+        }
 #else
 
 // Defined in glue.go
@@ -44,7 +56,7 @@ extern int   get_setting_int(const char *key);
 
 // Defined in logbuffer.c
 extern pthread_mutex_t go_log_mutex;
-extern char *          go_log_buffer;
+extern char           *go_log_buffer;
 extern int             go_log_buffer_len;
 extern int             go_log_level;
 extern uint64_t        c_allocs;
@@ -77,12 +89,12 @@ extern uint64_t        c_frees;
         })
 
 #    define printf(...) audiofs_log(AUDIOFS_LOG_INFO, __VA_ARGS__)
+#    define panicf(...) audiofs_log(AUDIOFS_LOG_PANIC, __VA_ARGS__)
+#    define fatalf(...) audiofs_log(AUDIOFS_LOG_FATAL, __VA_ARGS__)
 #endif
-#define panicf(...) audiofs_log(AUDIOFS_LOG_PANIC, __VA_ARGS__)
-#define fatalf(...) audiofs_log(AUDIOFS_LOG_FATAL, __VA_ARGS__)
-#define errorf(...) audiofs_log(AUDIOFS_LOG_ERROR, __VA_ARGS__)
-#define warnf(...)  audiofs_log(AUDIOFS_LOG_WARN, __VA_ARGS__)
-#define infof(...)  audiofs_log(AUDIOFS_LOG_INFO, __VA_ARGS__)
+#define errorf(format, ...) audiofs_log(AUDIOFS_LOG_ERROR, format, ##__VA_ARGS__)
+#define warnf(format, ...)  audiofs_log(AUDIOFS_LOG_WARN, format, ##__VA_ARGS__)
+#define infof(format, ...)  audiofs_log(AUDIOFS_LOG_INFO, format, ##__VA_ARGS__)
 
 #ifdef AUDIOFS_NO_TRACE
 #    define AUDIOFS_BREAKPOINT \
@@ -110,11 +122,11 @@ extern uint64_t        c_frees;
                 { asm("int $3"); }
 #        endif
 #    endif
-#    define debugf(...)                                      audiofs_log(AUDIOFS_LOG_DEBUG, __VA_ARGS__)
-#    define tracef(...)                                      audiofs_log(AUDIOFS_LOG_TRACE, __VA_ARGS__)
-#    define AUDIOFS_TRACEVAL_PREFIX(val, print_type, prefix) tracef("%s:" #    val "=%" print_type, prefix, val)
-#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) debugf("%s:" #    val "=%" print_type, prefix, val)
-#    define AUDIOFS_PRINTVAL(val, print_type)                debugf(#    val "=%" print_type, val)
+#    define debugf(format, ...)                              audiofs_log(AUDIOFS_LOG_DEBUG, format, ##__VA_ARGS__)
+#    define tracef(format, ...)                              audiofs_log(AUDIOFS_LOG_TRACE, format, ##__VA_ARGS__)
+#    define AUDIOFS_TRACEVAL_PREFIX(val, print_type, prefix) tracef("%s:" #val "=%" print_type "\n", prefix, val)
+#    define AUDIOFS_PRINTVAL_PREFIX(val, print_type, prefix) debugf("%s:" #val "=%" print_type "\n", prefix, val)
+#    define AUDIOFS_PRINTVAL(val, print_type)                debugf(#val "=%" print_type "\n", val)
 #endif
 
 #define INT32(X)                       ((int32_t)((X)&INT32_MAX))
@@ -125,19 +137,19 @@ extern uint64_t        c_frees;
 __attribute__((__warn_unused_result__)) __attribute__((always_inline)) __attribute__((used)) static inline void *
 AUDIOFS_CALLOC_NO_TRACE(int count, size_t size) {
     void *ptr = calloc(count, (size_t)(size));
-//    if (ptr > 0) { c_allocs += count * size; }
+    //    if (ptr > 0) { c_allocs += count * size; }
     return ptr;
 }
 // Use zero-initialized calloc rather than malloc
 #define AUDIOFS_MALLOC_NO_TRACE(size) AUDIOFS_CALLOC_NO_TRACE(1, size)
 // #define AUDIOFS_CALLOC_NO_TRACE(count, size) calloc(count, (size_t)(size))
 //  Free and set to NULL, but only if the incoming pointer is not NULL already
-#define AUDIOFS_FREE_NO_TRACE(ptr)                      \
-    {                                                   \
-        if ((ptr) != NULL) {                            \
-            free(ptr);                                  \
-            (ptr) = NULL;                               \
-        }                                               \
+#define AUDIOFS_FREE_NO_TRACE(ptr) \
+    {                              \
+        if ((ptr) != NULL) {       \
+            free(ptr);             \
+            (ptr) = NULL;          \
+        }                          \
     }
 
 #ifdef AUDIOFS_NO_TRACE

@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+static inline bool audiofs_buffer_ok(audiofs_buffer *ctx);
+
 __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_buffer_alloc(uint64_t size) {
     audiofs_buffer *buffer = AUDIOFS_MALLOC(sizeof(audiofs_buffer));
     if (buffer == NULL) { return NULL; }
@@ -16,23 +18,35 @@ __attribute__((__warn_unused_result__)) static inline audiofs_buffer *audiofs_bu
     buffer->self   = buffer;
     buffer->len    = size;
 
-    // If the caller just wanted to allocate this structure, let them.
-    if (size == 0) { return buffer; }
+    // If the caller just wanted to allocate this structure, deny.
+    if (size == 0) { return NULL; }
 
-    buffer->data = AUDIOFS_MALLOC(size);
+    buffer->data = AUDIOFS_MALLOC(size + 4);
     if (buffer->data == NULL) {
         // Alloc failed. Clear temporary memory and bail hard.
         AUDIOFS_FREE(buffer);
         return NULL;
     }
+    // Copy heap canary
+    memcpy(buffer->data + buffer->len, &buffer->cookie, 4);
+    if (false == audiofs_buffer_ok(buffer)) { return NULL; }
     pthread_mutex_unlock(&buffer->used_outside_audiofs);
     pthread_mutex_unlock(&buffer->lock);
 
     return buffer;
 }
 
-__attribute((pure)) __attribute__((__warn_unused_result__)) static inline bool audiofs_buffer_ok(audiofs_buffer *ctx) {
+__attribute((pure)) __attribute__((__warn_unused_result__)) __attribute__((always_inline)) static inline bool
+audiofs_buffer_ok(audiofs_buffer *ctx) {
+    AUDIOFS_PRINTVAL(ctx, "p");
     if (!ctx || ctx->cookie != _AUDIOFS_CONTEXT_MAGIC_A || ctx->self != ctx) { return false; }
+
+    debugf("checking heap canary\n");
+    if (0 != memcmp(ctx->data + ctx->len, &ctx->cookie, 4)) {
+        errorf("heap canary destroyed!\n");
+        return false;
+    }
+    debugf("heap canary ok!\n");
 
     return true;
 }
@@ -97,7 +111,12 @@ __attribute__((__warn_unused_result__)) static inline char *generate_random_stri
  */
 __attribute__((__warn_unused_result__)) static inline bool
 audiofs_buffer_realloc(audiofs_buffer *buffer, uint64_t size) {
-    if (!audiofs_buffer_ok(buffer)) { return false; }
+    AUDIOFS_PRINTVAL(buffer, "p");
+    tracef("resizing audiofs buffer to %" PRIu64 " bytes\n", size);
+    if (!audiofs_buffer_ok(buffer)) {
+        errorf("audiofs buffer is invalid!\n");
+        return false;
+    }
 
     pthread_mutex_lock(&buffer->lock);
 
@@ -120,18 +139,29 @@ audiofs_buffer_realloc(audiofs_buffer *buffer, uint64_t size) {
 
     if (size != buffer->len) {
         // reallocate with new size. New memory will be 0-initialized
-        void *new_ptr = realloc(buffer->data, size);
+        void *new_ptr = realloc(buffer->data, size + 4);
         if (new_ptr == NULL) {
             // Could not reallocate memory (OOM, or other). Memory is unchanged
+            errorf("could not reallocate memory\n");
             pthread_mutex_unlock(&buffer->lock);
             return false;
         }
-        // blank out new regions if realloc is larger
-        if (buffer->len > size) { memset(new_ptr + buffer->len, 0, buffer->len - size); }
+        AUDIOFS_PRINTVAL(new_ptr, "p");
+        AUDIOFS_PRINTVAL(size + 4, PRIu64);
+        AUDIOFS_PRINTVAL(new_ptr + buffer->len, "p");
+        AUDIOFS_PRINTVAL(buffer->len, PRIu64);
+        AUDIOFS_PRINTVAL(MAX(buffer->len, size) - MIN(buffer->len, size), PRIu64);
+        // blank out new regions
+        memset(new_ptr + buffer->len, 0, MAX(buffer->len, size) - MIN(buffer->len, size));
+        debugf("memset ok\n");
         buffer->len  = size;
         buffer->data = new_ptr;
-       // c_frees += portable_ish_malloced_size(buffer->data);
-       // c_allocs += size;
+        // Copy heap canary
+        tracef("writing heap canary...\n");
+        memcpy(buffer->data + buffer->len, &buffer->cookie, 4);
+        if (false == audiofs_buffer_ok(buffer)) { return NULL; }
+        // c_frees += portable_ish_malloced_size(buffer->data);
+        // c_allocs += size;
     }
 
     // emergency check to provide guarantee:

@@ -14,11 +14,11 @@
 
 // defined in transcode.c
 extern audiofs_avio_handle *do_transcode(
-    const char *          from_path,
-    AVFormatContext *     from_context,
-    const char *          to,
+    const char           *from_path,
+    AVFormatContext      *from_context,
+    const char           *to,
     const AVOutputFormat *oformat,
-    const char *          format_name);
+    const char           *format_name);
 
 audiofs_buffer *test_buffer;
 
@@ -230,18 +230,18 @@ __attribute__((used)) __attribute__((hot)) __attribute__((warn_unused_result)) c
 get_metadate_from_file(char *path) {
     // region variables
     infof("getting metadata from '%s'", path);
-    AVFormatContext *  fmt_ctx = avformat_alloc_context();
+    AVFormatContext   *fmt_ctx = avformat_alloc_context();
     AVDictionaryEntry *tag     = NULL;
     int                ret;
-    json_t *           json                  = json_object();
-    json_t *           json_file             = json_object();
-    json_t *           json_file_format      = json_object();
-    json_t *           json_file_metadata    = json_object();
-    json_t *           json_streams_array    = json_array();
-    json_t **          json_streams          = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
-    json_t **          json_streams_metadata = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
-    json_t **          json_streams_codec    = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
-    char *json_str = "";
+    json_t            *json                  = json_object();
+    json_t            *json_file             = json_object();
+    json_t            *json_file_format      = json_object();
+    json_t            *json_file_metadata    = json_object();
+    json_t            *json_streams_array    = json_array();
+    json_t           **json_streams          = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
+    json_t           **json_streams_metadata = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
+    json_t           **json_streams_codec    = AUDIOFS_CALLOC(fmt_ctx->nb_streams, sizeof(json_t *));
+    char              *json_str              = "";
 
     // endregion variables
 
@@ -312,7 +312,7 @@ get_metadate_from_file(char *path) {
                 goto end;
             }
 
-            char * chromaprint = AUDIOFS_MALLOC(size + 1);
+            char *chromaprint = AUDIOFS_MALLOC(size + 1);
             strncpy(chromaprint, avio_handle->buffer->data, size);
 
             //            infof("size: %lld\n", s.st_size);
@@ -434,11 +434,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    const char* json = get_metadate_from_file(argv[1]);
+    const char *json = get_metadate_from_file(argv[1]);
 
-    if (json == NULL) {
-        return 1;
-    }
+    if (json == NULL) { return 1; }
     fprintf(stdout, "%s\n", json);
     return 0;
 }

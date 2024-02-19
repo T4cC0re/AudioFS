@@ -92,7 +92,7 @@ end:
  * @return -1 on error or enum SwrEngine (you have to cast)
  */
 int get_supported_resampler(const char *resampler) {
-    SwrContext *   swr        = NULL;
+    SwrContext    *swr        = NULL;
     bool           supported  = false;
     enum SwrEngine swr_engine = (enum SwrEngine) - 1;
     int            tmp_level  = 0;
