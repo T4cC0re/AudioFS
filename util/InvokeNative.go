@@ -5,21 +5,16 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"gitlab.com/t4cc0re/audiofs/lib/types"
 )
 
 func GetMetadataFromFile(file string) (*types.FileMetadata, error) {
-
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
-	JSON, err := exec.Command(path.Join(exPath, "native"), file).Output()
+	commandString := append(nativeBlobExec, file)
+	cmd := exec.Command(commandString[0], commandString[1:]...)
+	cmd.Stderr = os.Stderr
+	JSON, err := cmd.Output()
 	if err != nil {
 		logrus.Errorf("%+v", err)
 		return nil, err

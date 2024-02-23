@@ -7,7 +7,7 @@ import (
 	_ "gitlab.com/t4cc0re/audiofs/config"
 	"gitlab.com/t4cc0re/audiofs/lib"
 	"gitlab.com/t4cc0re/audiofs/lib/types"
-    //	"gitlab.com/t4cc0re/audiofs/native"
+	//	"gitlab.com/t4cc0re/audiofs/native"
 	"gitlab.com/t4cc0re/audiofs/serve"
 	"gitlab.com/t4cc0re/audiofs/util"
 	"os"
@@ -95,8 +95,17 @@ func main() {
 					logrus.Printf("%d\n", len(d))
 					var a types.FileMetadata
 					logrus.Printf("%+v\n", util.UnmarshallCompressed(d, &a))
-					if len(a.Streams) > 0 {
-						fmt.Fprintf(os.Stdout, "%s\t%s\n", a.Streams[0].Chromaprint, file)
+					printed := false
+					for _, stream := range a.Streams {
+						if len(stream.Chromaprint) > 0 {
+
+							fmt.Fprintf(os.Stdout, "%s\t%s\n", stream.Chromaprint, file)
+							printed = true
+							break
+						}
+					}
+					if !printed {
+						fmt.Fprintf(os.Stdout, "dnf\t%s\n", file)
 					}
 					return nil
 				})
@@ -146,7 +155,7 @@ a count and a string.`,
 		level = logrus.WarnLevel
 	}
 	logrus.SetLevel(level)
-//	native.ApplyLogrusLevel()
+	//	native.ApplyLogrusLevel()
 
 	cmdImport.Flags().BoolVarP(&import_KeepOriginal, "keep", "k", true, "keep the original file")
 	cmdImport.Flags().BoolVarP(&importExists_CarefulDedupe, "careful", "c", true, "only dedupe a file if PCM audio is bit-for-bit identical")
